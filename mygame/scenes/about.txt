@@ -1,4 +1,4 @@
-[b]关于作者[/b]
+﻿[b]关于作者[/b]
 *line_break
 一个恐怖的软泥怪！
 *line_break
@@ -7,6 +7,8 @@
 
 [b]关于本游戏[/b]
 *line_break
+题文无关，起名叫存档点是因为应景！
+*line_break
 按阵营分三条世界线，每条世界线世界观不同人设不同剧情不同，
 *line_break
 唯有一点是相同的：最后都是嫖勇者。
@@ -14,16 +16,81 @@
 
 能让我硬着头皮对着Atom搞这么长时间，性欲确实是第一生产力，不服不行。
 
-[b]一些链接[/b]
+[b]Credits[/b]
 *line_break
-① 本游戏NPC路线的梗来源于
-*link https://redd.it/8saheu Reddit的r/WritingPrompts
+*line_break
+WritingPrompts
+*line_break
+Aerd_Gander（
+*link https://redd.it/8saheu r/WritingPrompts
+）
+
+
+Icon
+*line_break
+Dario Ferrando（
+*link http://www.linea.io/ linea_basic_1.0
+）
+
+
+Plugin
+*line_break
+CJW（
+*link https://forum.choiceofgames.com/t/saving-system-plugin/983 smPlugin, smPluginMenuAddon
+）
+*line_break
+Malebranche（
+*link https://forum.choiceofgames.com/t/cs-fade-color-mod-v-1-2/11306 fade.css, scene.js
+,
+*link https://forum.choiceofgames.com/t/cs-auto-advance-and-timed-choice-mod-v-2-2-is-up-new-update/15983 autoAdvance.js
+）
+*line_break 
+Spectrum （
+*link https://forum.choiceofgames.com/t/unofficial-choicescript-audio-enhanced-plugin/37923 sePlugin.js
+）
+
+
+References
+*line_break
+MutonElite（
+*link https://forum.choiceofgames.com/t/tutorial-basic-inventory-shop-system/2629/1 Tutorial : Basic Inventory & Shop System
+）
+*line_break
+一位好心GN发在的范例（
+*link https://idelem.github.io/sexpert-guide/mygame/index.html
+）
+*line_break
+DashingDon（
+*link https://dashingdon.com/ Easy Reader style.css
+）
+*line_break
+ChoiceScript Wiki（
+*link http://choicescriptdev.wikia.com/wiki/Style.css Style.css
+）
+*line_break
+W3eschools（
+*link https://www.w3schools.com/css/css3_buttons.asp CSS Buttons
+）
+*line_break
+WebGardients（
+*link https://webgradients.com/
+）
+*line_break
+Abnerlee（
+*link https://github.com/typora/typora-theme-gallery/blob/gh-pages/media/theme/han/han.css han.css
+）
+*line_break
+Kingsleyh（
+*link https://atom.io/packages/language-choicescript language-choicescript
+） 
+
+
+[b]沾着软泥的传送门[/b]
+*line_break
+① 邪恶软泥怪的发霉腿肉：
+*link https://falseswipe.github.io/ 回收站
 。
 *line_break
-② 邪恶软泥怪的发霉腿肉：
-*link falseswipe.github.io 回收站
-。
-*line_break
-③ 邪恶软泥怪的新鲜腿肉：
+② 邪恶软泥怪的新鲜腿肉：
 *link http://www.jjwxc.net/oneauthor.php?authorid=1933377 Word：从入门到放弃
 。

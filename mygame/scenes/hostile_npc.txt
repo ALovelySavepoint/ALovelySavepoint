@@ -7,11 +7,11 @@
     准确地说，你拥有着……
     *choice
       #极高的物理攻击伤害。
-        *set strength 90
+        *set strength 70
         你是个恐怖的菜刀选手，一刀一个小朋友。
         *goto weakness
       #极高的黑魔法伤害。
-        *set intelligence 90
+        *set intelligence 70
         你是个施法者，黑魔法使得出神入化。
         *goto weakness
   #超绝的防御能力。
@@ -19,17 +19,17 @@
     *choice
       #极高的物理防御。
         *goto def
-        *set magic_resistance 90
+        *set magic_resistance 70
       #极高的魔法防御。
         *label def
-        *set magic_resistance 90
+        *set magic_resistance 70
         你的防御高到攻击力差的勇者根本打不动你。
       #治愈伤害的能力。
         *set skill “回血”
         你有回复技能，续航能力极强，十分难缠，让菜鸡勇者们看着就头皮发麻。
         *goto weakness
       #高得令人诧异的敏捷。
-        *set agility 90
+        *set agility 70
         你闪避高到对手根本伤不到你。
         *goto weakness
   #恐怖的各种负面效果。
@@ -53,7 +53,7 @@
         *line_break
         多亏了你的女性性征，你对付异性恋勇者有如砍瓜切菜。不仅如此，你胯下的阴茎，经常能让没有防备的勇者的精神受到暴击。
         *line_break
-        ……说起来，有个别勇者见到你故意露出来吓人的肉棒反而更兴奋是怎么回事，这届勇者是不是不太行啊。
+        ……说起来，有个别勇者见到你故意露出来吓人的肉棒反而更兴奋是怎么回事。这届勇者是不是不太行啊。
         *goto weakness
 
 *label weakness
@@ -62,10 +62,14 @@
 *choice
   #攻击力太低。
     你的攻击力太低了。
-    *finish
+    *goto count
   #皮太脆。
     你的防御力太低了。
-    *finish
+    *goto count
   #续航能力差。
     你的续航能力太差了。
-    *finish
+    *goto count
+
+
+*label count
+*set count true

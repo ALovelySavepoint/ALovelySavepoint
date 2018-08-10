@@ -7,14 +7,18 @@
     *stat_chart
         text alignment 阵营
     *line_break
-    *stat_chart
-        text strength 攻击
-        text defense 防御
-        text intelligence 魔攻
-        text magic_resistance 魔防
-        text constitution 体质
-        text agility 敏捷
-        text skill 能力
+    *if (count)
+        *stat_chart
+            text strength 攻击
+            text defense 防御
+            text intelligence 魔攻
+            text magic_resistance 魔防
+            text constitution 体质
+            text agility 敏捷
+            text skill 能力
+        *finish
+    *else
+        先创建完角色再来看属性啦！
     *finish
 *elseif (alignment = "中立")
     *stat_chart
@@ -33,9 +37,9 @@
     *if (empty_inventory)
       *set comma true
       *set inventory &"什么也没有。"
-    *if (sword)
+    *if (sword1)
       *set comma true
-      *set inventory &"$!{sword_name} （$!{sword_description}耐久度${sword_dura}。）"
+      *set inventory &"$!{sword1_name} （$!{sword1_description}耐久度${sword1_dura}。）"
     *if (cape)
        *if comma
           *set inventory &"，"

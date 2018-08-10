@@ -14,7 +14,7 @@
 *comment software distributed under the License is distributed on an
 *comment "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 *comment either express or implied.
-*title 和勇者谈恋爱
+*title 存档点
 *author 一个知名不具的邪恶软泥怪
 *scene_list
   startup
@@ -39,15 +39,15 @@
 *comment
 *comment
 *comment -------------混乱属性-------------
-*create strength "暂缺"
-*create weakness "暂缺"
-*create strength "暂缺"
-*create defense "暂缺"
-*create intelligence "暂缺"
-*create magic_resistance "暂缺"
-*create constitution "暂缺"
-*create agility "暂缺"
+*create hp 150
+*create strength 50
+*create defense 50
+*create intelligence 50
+*create magic_resistance 50
+*create constitution 50
+*create agility 50
 *create skill "暂缺"
+*create count false
 *comment -------------混乱属性-------------
 *comment
 *comment
@@ -82,9 +82,9 @@
   hidden
   成为一名迷人的扶她。
 
-*sm_init 和勇者谈恋爱 | 5
+*sm_init 存档点 | 5
 
-相信大家看到作者名也就明白了。这是一个使用ChoiceScript编写、
+相信大家看到作者名也就明白了。这是一个使用 ChoiceScript 编写、
 *line_break
 由你们软泥怪旁友负责剧情、游戏制作及部分界面汉化的恋爱文字冒险游戏，
 *line_break
