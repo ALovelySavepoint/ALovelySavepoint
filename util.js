@@ -732,7 +732,7 @@ function restartGame(shouldPrompt) {
     }, "");
   }
   if (shouldPrompt) {
-    asyncConfirm("È·¶¨Òª´ÓÍ·¿ªÊ¼Âğ£¿", actuallyRestart);
+    asyncConfirm("ç¡®å®šè¦ä»å¤´å¼€å§‹å—ï¼Ÿ", actuallyRestart);
   } else {
     actuallyRestart(true);
   }

@@ -18,16 +18,13 @@
  */
 function Scene(name, stats, nav, options) {
     if (!name) name = "";
-    if (!stats) stats = {implicit_control_flow:false};
-    if (stats["implicit_control_flow"] === undefined) stats["implicit_control_flow"] = false;
+    if (!stats) stats = {};
     // the name of the scene
     this.name = name;
 
     // the permanent statistics and the temporary values
     this.stats = stats;
-    // implicit_control_flow controls whether goto is necessary to leave options (true means no)
-    // _choiceEnds stores the line numbers to jump to when choice #options end.
-    this.temps = {choice_reuse:"allow", choice_user_restored:false, _choiceEnds:{}};
+    this.temps = {choice_reuse:"allow", choice_user_restored:false};
 
     // the navigator determines which scene comes next
     this.nav = nav;
@@ -74,8 +71,6 @@ function Scene(name, stats, nav, options) {
 
     // where should we print text?
     this.target = null;
-
-    this.accumulatedParagraph = [];
 }
 
 Scene.prototype.reexecute = function reexecute() {
@@ -104,26 +99,32 @@ Scene.prototype.printLoop = function printLoop() {
         } else if (indent < this.indent) {
             this.dedent(indent);
         }
-        // Ability to end a choice #option without goto is guarded by implicit_control_flow variable
-        if (this.temps._choiceEnds[this.lineNum] && 
-                (this.stats["implicit_control_flow"] || this.temps._fakeChoiceDepth > 0)) {
-            // Skip to the end of the choice if we hit the end of an #option
-            this.rollbackLineCoverage();
-            this.lineNum = this.temps._choiceEnds[this.lineNum];
-            this.rollbackLineCoverage();
-            if (this.temps._fakeChoiceDepth > 0) {
-                this.temps._fakeChoiceDepth--;
-            }
-            continue;
+        if (this.temps.fakeChoiceLines && this.temps.fakeChoiceLines[this.lineNum]) {
+          this.rollbackLineCoverage();
+          this.lineNum = this.temps.fakeChoiceEnd;
+          this.rollbackLineCoverage();
+          delete this.temps.fakeChoiceEnd;
+          delete this.temps.fakeChoiceLines;
+          continue;
         }
         this.indent = indent;
-        if (/^\s*#/.test(line)) {
-            throw new Error(this.lineMsg() + "It is illegal to fall out of a *choice statement; you must *goto or *finish before the end of the indented block.");
-        }
         if (!this.runCommand(line)) {
+            if (/^\s*#/.test(line)) {
+                if (this.temps.fakeChoiceEnd) {
+                    this.rollbackLineCoverage();
+                    this.lineNum = this.temps.fakeChoiceEnd;
+                    this.rollbackLineCoverage();
+                    delete this.temps.fakeChoiceEnd;
+                    delete this.temps.fakeChoiceLines;
+                    continue;
+                } else {
+                    throw new Error(this.lineMsg() + "It is illegal to fall out of a *choice statement; you must *goto or *finish before the end of the indented block.");
+                }
+            }
             this.prevLine = "text";
             this.screenEmpty = false;
-            this.printLine(line);
+            this.printLine(trim(line));
+            printx(' ', this.target);
         }
     }
     this.rollbackLineCoverage();
@@ -140,17 +141,16 @@ Scene.prototype.printLoop = function printLoop() {
 
 Scene.prototype.dedent = function dedent(newDent) {};
 
-Scene.prototype.printLine = function printLine(line) {
+Scene.prototype.printLine = function printLine(line, parent) {
     if (!line) return null;
-    line = this.replaceVariables(line.replace(/^ */, ""));
-    this.accumulatedParagraph.push(line);
-    // insert extra space unless the line ends with hyphen or dash
-    if (!/([-\u2011-\u2014]|\[c\/\])$/.test(line)) this.accumulatedParagraph.push(' ');
+    line = this.replaceVariables(line);
+    if (!parent) parent = this.target;
+    return printx(line, parent);
 };
 
 Scene.prototype.replaceVariables = function (line) {
   line = String(line);
-  var replacer = /([$@](\!?\!?)\{)/;
+  var replacer = /(\$(\!?\!?)\{)/;
   var index = 0;
   var output = [];
   for (var result = replacer.exec(line); result; result = replacer.exec(line.substring(index))) {
@@ -172,77 +172,17 @@ Scene.prototype.replaceVariables = function (line) {
       }
     }
     if (closingCurly == -1) {
-      throw new Error(this.lineMsg() + "invalid "+result[0]+"} variable substitution at letter " + (index + result.index + 1));
+      throw new Error(this.lineMsg() + "invalid ${} variable substitution at letter " + (index + result.index + 1));
     }
-    var body = line.substring(exprStart, closingCurly);
-    var stack, value;
-    if (result[0].charAt(0) === "$") {
-      stack = this.tokenizeExpr(body);
-      value = this.evaluateExpr(stack);
-    } else {
-      var expr;
-      var options;
-      if (/^\s*\(/.test(body)) {
-        var parens = 0;
-        var closingParen = -1;
-        for (var i = 1; i < body.length; i++) {
-          var c = body.charAt(i);
-          if (c === "(") {
-            parens++;
-          } else if (c === ")") {
-            if (parens) {
-              parens--;
-            } else {
-              closingParen = i;
-              break;
-            }
-          }
-        }
-        if (closingParen == -1) {
-          throw new Error(this.lineMsg() + "invalid "+result[0]+"} at letter " + (index + result.index + 1) + "; missing closing parenthesis )");
-        }
-        if (body.charAt(closingParen+1) != " ") {
-          throw new Error(this.lineMsg() + "invalid "+result[0]+"} at letter " + (index + result.index + 1) + "; there should be a space after the closing parenthesis )");
-        }
-        expr = body.substring(1, closingParen);
-        options = body.substring(closingParen+2).split("|");
-      } else {
-        if (!/^\S+ /.test(body)) {
-          throw new Error(this.lineMsg() + "invalid "+result[0]+"} at letter " + (index + result.index + 1) + "; there should be a space after the first word");
-        }
-        var spaceIndex = body.indexOf(' ');
-        expr = body.substring(0, spaceIndex);
-        options = body.substring(spaceIndex+1).split("|");
-      }
-      if (options.length < 2) {
-        throw new Error(this.lineMsg() + "invalid "+result[0]+"} at letter " + (index + result.index + 1) + "; there should be at least one pipe | to separate options");
-      }
-      stack = this.tokenizeExpr(expr);
-      value = this.evaluateExpr(stack);
-      if (typeof value === "boolean" || /^(true|false)$/i.test(value)) {
-        value = bool(value) ? 1 : 2;
-      }
-      value = num(value, this.lineNum+1);
-      if ((value | 0) !== value) {
-        throw new Error(this.lineMsg() + "invalid "+result[0]+"} at letter " + (index + result.index + 1) + "; '"+expr+"' is equal to " + value + " which is not a whole integer number");
-      } else if (value < 1) {
-        throw new Error(this.lineMsg() + "invalid "+result[0]+"} at letter " + (index + result.index + 1) + "; '"+expr+"' is equal to " + value + " which is not a positive number");
-      } else if (value > options.length) {
-        throw new Error(this.lineMsg() + "invalid "+result[0]+"} at letter " + (index + result.index + 1) + "; '"+expr+"' is equal to " + value + " but there are only " + options.length + " options");
-      }
-      value = options[value-1];
-      value = this.replaceVariables(value);
-    }
+    var expr = line.substring(exprStart, closingCurly);
+    var stack = this.tokenizeExpr(expr);
+    var value = this.evaluateExpr(stack);
     var capitalize = result[2];
     if (capitalize) value = String(value);
     if (capitalize == "!") {
       value = value.charAt(0).toUpperCase() + value.slice(1);
     } else if (capitalize == "!!") {
       value = value.toUpperCase();
-    }
-    if (typeof highlightGenderPronouns != "undefined" && highlightGenderPronouns && /\b(he|him|his|she|her|hers)\b/gi.test(value)) {
-      // this zero-width space will give us a hint for highlighting
-      output.push("\u200b");
     }
     output.push(value);
     index = closingCurly+1;
@@ -253,8 +193,12 @@ Scene.prototype.replaceVariables = function (line) {
 };
 
 Scene.prototype.paragraph = function paragraph() {
-    printParagraph(this.accumulatedParagraph.join(""));
-    this.accumulatedParagraph = [];
+    if (this.prevLine == "text") {
+        println("", this.target);
+        println("", this.target);
+    } else if (this.prevLine == "block") {
+      println("", this.target);
+    }
     this.prevLine = "empty";
 };
 
@@ -269,52 +213,6 @@ Scene.prototype.loadSceneFast = function loadSceneFast(url) {
       result = allScenes[this.name];
       if (!result) throw new Error("Couldn't load scene '" + this.name + "'\nThe file doesn't exist.");
       return this.loadLinesFast(result.crc, result.lines, result.labels);
-    } else if (typeof isIosApp != "undefined") {
-      startLoading();
-      var self = this;
-      var startedWaiting = new Date().getTime();
-
-      function retryScenes(command) {
-        if (!command) command = "retryscenes";
-        clearScreen(function() {
-          startLoading();
-          if (command == "retryscenes") curl();
-          window.downloadState = null;
-          callIos(command);
-          startedWaiting = new Date().getTime();
-          awaitAllScenes();
-        });
-      }
-
-      function awaitAllScenes() {
-        if (typeof allScenes != "undefined") {
-          result = allScenes[self.name];
-          if (!result) throw new Error("Couldn't load scene '" + self.name + "'\nThe file doesn't exist.");
-          self.loadLinesFast(result.crc, result.lines, result.labels);
-        } else if (window.downloadState == "failed" || (new Date().getTime() - startedWaiting) > 5000) {
-          doneLoading();
-          if (window.downloadRequired) {
-            println("We weren't able to download the latest version of the game.");
-            println("");
-            printButton("Try Again", main, false, retryScenes);
-          } else {
-            println("We weren't able to download the latest version of the game. Please try downloading again. The latest version may contain important fixes.");
-            println("");
-            var retry = {name: "Try downloading again."};
-            var ignore = {name: "Continue playing without the latest version."}
-            printOptions([""], [retry, ignore], function(option) {
-              if (option == retry) {
-                retryScenes();
-              } else {
-                retryScenes("requestscenesforce");
-              }
-            });
-          }
-        } else {
-          setTimeout(awaitAllScenes, 0);
-        }
-      }
-      return awaitAllScenes();
     }
     startLoading();
     if (!url) {
@@ -446,15 +344,7 @@ Scene.prototype.loadScene = function loadScene(url) {
             " <p><button onclick='window.location.reload();'>Refresh Now</button></p>";
             return;
         } else if (xhr.responseText === "") {
-          if (window.location.protocol == "file:" && !window.isMobile && /Chrome/.test(navigator.userAgent)) {
-            window.onerror("We're sorry, Google Chrome has blocked ChoiceScript from functioning.  (\"file:\" URLs cannot "+
-            "load files in Chrome.)  ChoiceScript works just fine in Chrome, but only on a published website like "+
-            "choiceofgames.com.  For the time being, please try another browser like Mozilla Firefox.");
-            return;
-          } else {
-            window.onerror("Couldn't load " + url + "\nThe file is probably missing or empty.");
-            return;
-          }
+          throw new Error("Couldn't load " + url + "\nThe file is probably missing or empty.");
         }
         var result = xhr.responseText;
         scene = result;
@@ -496,7 +386,7 @@ Scene.prototype.checkSum = function checkSum(crc) {
     if (this.temps.choice_crc != crc) {
       // The scene has changed; restart the scene
       var userRestored = this.temps.choice_user_restored || false;
-      this.temps = {choice_reuse:"allow", choice_user_restored:userRestored, choice_crc: crc, _choiceEnds:{}};
+      this.temps = {choice_reuse:"allow", choice_user_restored:userRestored, choice_crc: crc};
       this.lineNum = 0;
       this.indent = 0;
     }
@@ -508,7 +398,7 @@ Scene.prototype.checkSum = function checkSum(crc) {
 Scene.prototype.loadLines = function loadLines(str) {
     var crc = crc32(str);
     this.checkSum(crc);
-    this.lines = str.split(/\r?\n/);
+    this.lines = str.split('\n');
     this.parseLabels();
     this.loaded = true;
 };
@@ -525,7 +415,6 @@ Scene.prototype.execute = function execute() {
         return;
     }
     if (this.nav) this.nav.repairStats(stats);
-    if (!this.temps._choiceEnds) this.temps._choiceEnds = {};
     doneLoading();
     if (typeof this.targetLabel != "undefined") {
       var label = this.targetLabel.label.toLowerCase();
@@ -544,15 +433,9 @@ Scene.prototype.execute = function execute() {
 Scene.prototype.parseLabels = function parseLabels() {
     var lineLength = this.lines.length;
     var oldLineNum = this.lineNum;
-    var screenshots = ("choicescript_screenshots" == this.name);
-    var seenChoiceWithoutSet = 0;
     for (this.lineNum = 0; this.lineNum < lineLength; this.lineNum++) {
         this.rollbackLineCoverage();
         var line = this.lines[this.lineNum];
-        // strip byte order mark
-        if (this.lineNum == 0 && line.charCodeAt(0) == 65279) lines[0] = line.substring(1);
-        var invalidCharacter = line.match(/^(.*)\ufffd/);
-        if (invalidCharacter) throw new Error(this.lineMsg() + "invalid character. (ChoiceScript text should be saved in the UTF-8 encoding.) " + invalidCharacter[0]);
         var result = /^(\s*)\*(\w+)(.*)/.exec(line);
         if (!result) continue;
         var indentation = result[1];
@@ -566,15 +449,6 @@ Scene.prototype.parseLabels = function parseLabels() {
               throw new Error(this.lineMsg() + "label '"+data+"' already defined on line " + (this.labels[data]*1+1));
             }
             this.labels[data] = this.lineNum;
-        } else if (screenshots) {
-          if ("fake_choice" == command) {
-            if (seenChoiceWithoutSet) throw new Error(this.lineMsg() +
-              "In choicescript_screenshots, you need to *set at least one variable between *fake_choice commands, so the stat screen looks interesting. " +
-              "There was no *set since the last *fake_choice on line " + seenChoiceWithoutSet + ".");
-            seenChoiceWithoutSet = this.lineNum+1;
-          } else if ("set" == command) {
-            seenChoiceWithoutSet = 0;
-          }
         }
     }
     this.rollbackLineCoverage();
@@ -584,34 +458,17 @@ Scene.prototype.parseLabels = function parseLabels() {
 // if this is a command line, run it
 Scene.prototype.runCommand = function runCommand(line) {
     var result = /^\s*\*(\w+)(.*)/.exec(line);
-    if (!result) {
-      if (this.secondaryMode == "startup" && this.startupCallback) {
-        this.finished = true;
-        this.skipFooter = true;
-        this.startupCallback();
-        return true;
-      }
-      return false;
-    }
+    if (!result) return false;
     var command = result[1].toLowerCase();
     var data = trim(result[2]);
     if (Scene.validCommands[command]) {
         if ("comment" == command) return true;
         if (Scene.initialCommands[command]) {
-          if ("startup" != String(this.name).toLowerCase() || !this.initialCommands) {
+          if ("startup" != this.name || !this.initialCommands) {
             throw new Error(this.lineMsg() + "Invalid "+command+" instruction, only allowed at the top of startup.txt");
           }
         } else {
-          if (this.secondaryMode == "startup" && this.startupCallback) {
-            this.finished = true;
-            this.skipFooter = true;
-            this.startupCallback();
-            return true;
-          }
           this.initialCommands = false;
-        }
-        if (command == "choice" && String(this.name).toLowerCase() == "choicescript_screenshots") {
-          throw new Error(this.lineMsg() + "choicescript_screenshots files should only contain *fake_choice commands, not real *choice commands");
         }
         this[command](data);
     } else {
@@ -665,6 +522,57 @@ Scene.prototype.runCommand = function runCommand(line) {
 // if multiple groups are specified, allow the user to make multiple choices simultaneously
 //   all multi-dimensional choices must be valid (otherwise throw a parse error)
 Scene.prototype.choice = function choice(data) {
+	var body = document.getElementById("body");
+	if("isolateschemes" in stats){
+		if(stats["isolateschemes"] === true){
+			if (window.stats.scene.secondaryMode == "stats"){
+				body.style.backgroundColor = stats["statscreencolor"];
+				body.style.color = stats["statscreencolor2"];
+				if (stats["togglestatscreenfade"] == true){
+					var text = document.getElementById("text");
+					text.style.WebkitAnimation = "fadein "+stats["statscreenfadetime"]; /* Safari and Chrome */
+					text.style.MozAnimation = "fadein "+stats["statscreenfadetime"]; /* Firefox */
+					text.style.msAnimation = "fadein "+stats["statscreenfadetime"]; /* Internet Explorer */
+					text.style.OAnimation = "fadein "+stats["statscreenfadetime"]; /* Opera */
+					text.style.Animation = "fadein "+stats["statscreenfadetime"];
+				}
+			}else{
+				body.style.backgroundColor = stats["scenecolor"];
+				body.style.color = stats["scenecolor2"];
+				if (stats["togglescenefade"] == true){
+					var text = document.getElementById("text");
+					text.style.WebkitAnimation = "fadein "+stats["scenefadetime"]; /* Safari and Chrome */
+					text.style.MozAnimation = "fadein "+stats["scenefadetime"]; /* Firefox */
+					text.style.msAnimation = "fadein "+stats["scenefadetime"]; /* Internet Explorer */
+					text.style.OAnimation = "fadein "+stats["scenefadetime"]; /* Opera */
+					text.style.Animation = "fadein "+stats["scenefadetime"];
+				}
+			}
+		}
+		if(stats["isolateschemes"] === false){
+			body.style.backgroundColor = stats["scenecolor"];
+			body.style.color = stats["scenecolor2"];
+			if (stats["togglescenefade"] == true){
+				var text = document.getElementById("text");
+				text.style.WebkitAnimation = "fadein "+stats["scenefadetime"]; /* Safari and Chrome */
+				text.style.MozAnimation = "fadein "+stats["scenefadetime"]; /* Firefox */
+				text.style.msAnimation = "fadein "+stats["scenefadetime"]; /* Internet Explorer */
+				text.style.OAnimation = "fadein "+stats["scenefadetime"]; /* Opera */
+				text.style.Animation = "fadein "+stats["scenefadetime"];
+			}
+		}
+	}else{
+		body.style.backgroundColor = stats["scenecolor"];
+		body.style.color = stats["scenecolor2"];
+		if (stats["togglescenefade"] == true){
+			var text = document.getElementById("text");
+			text.style.WebkitAnimation = "fadein "+stats["scenefadetime"]; /* Safari and Chrome */
+			text.style.MozAnimation = "fadein "+stats["scenefadetime"]; /* Firefox */
+			text.style.msAnimation = "fadein "+stats["scenefadetime"]; /* Internet Explorer */
+			text.style.OAnimation = "fadein "+stats["scenefadetime"]; /* Opera */
+			text.style.Animation = "fadein "+stats["scenefadetime"];
+		}
+	}
     var startLineNum = this.lineNum;
     var groups = data.split(/ /);
     for (var i = 0; i < groups.length; i++) {
@@ -678,23 +586,72 @@ Scene.prototype.choice = function choice(data) {
       self.standardResolution(option);
     });
     this.finished = true;
-    if (this.temps._fakeChoiceDepth > 0 || this.stats["implicit_control_flow"]) {
-      if (!this.temps._choiceEnds) {
-        this.temps._choiceEnds = {};
-      }
+    if (this.fakeChoice) {
+      this.temps.fakeChoiceEnd = this.lineNum;
+      var fakeChoiceLines = {};
       for (i = 0; i < options.length; i++) {
-        this.temps._choiceEnds[options[i].line-1] = this.lineNum;
+        fakeChoiceLines[options[i].line-1] = 1;
       }
+      this.temps.fakeChoiceLines = fakeChoiceLines;
     }
     this.lineNum = startLineNum;
 };
 
 Scene.prototype.fake_choice = function fake_choice(data) {
-    if (this.temps._fakeChoiceDepth === undefined) {
-        this.temps._fakeChoiceDepth = 0;
-    }
-    this.temps._fakeChoiceDepth++;
-    this.choice(data);
+	var body = document.getElementById("body");
+	if("isolateschemes" in stats){
+		if(stats["isolateschemes"] === true){
+			if (window.stats.scene.secondaryMode == "stats"){
+				body.style.backgroundColor = stats["statscreencolor"];
+				body.style.color = stats["statscreencolor2"];
+				if (stats["togglestatscreenfade"] == true){
+					var text = document.getElementById("text");
+					text.style.WebkitAnimation = "fadein "+stats["statscreenfadetime"]; /* Safari and Chrome */
+					text.style.MozAnimation = "fadein "+stats["statscreenfadetime"]; /* Firefox */
+					text.style.msAnimation = "fadein "+stats["statscreenfadetime"]; /* Internet Explorer */
+					text.style.OAnimation = "fadein "+stats["statscreenfadetime"]; /* Opera */
+					text.style.Animation = "fadein "+stats["statscreenfadetime"];
+				}
+			}else{
+				body.style.backgroundColor = stats["scenecolor"];
+				body.style.color = stats["scenecolor2"];
+				if (stats["togglescenefade"] == true){
+					var text = document.getElementById("text");
+					text.style.WebkitAnimation = "fadein "+stats["scenefadetime"]; /* Safari and Chrome */
+					text.style.MozAnimation = "fadein "+stats["scenefadetime"]; /* Firefox */
+					text.style.msAnimation = "fadein "+stats["scenefadetime"]; /* Internet Explorer */
+					text.style.OAnimation = "fadein "+stats["scenefadetime"]; /* Opera */
+					text.style.Animation = "fadein "+stats["scenefadetime"];
+				}
+			}
+		}
+		if(stats["isolateschemes"] === false){
+			body.style.backgroundColor = stats["scenecolor"];
+			body.style.color = stats["scenecolor2"];
+			if (stats["togglescenefade"] == true){
+				var text = document.getElementById("text");
+				text.style.WebkitAnimation = "fadein "+stats["scenefadetime"]; /* Safari and Chrome */
+				text.style.MozAnimation = "fadein "+stats["scenefadetime"]; /* Firefox */
+				text.style.msAnimation = "fadein "+stats["scenefadetime"]; /* Internet Explorer */
+				text.style.OAnimation = "fadein "+stats["scenefadetime"]; /* Opera */
+				text.style.Animation = "fadein "+stats["scenefadetime"];
+			}
+		}
+	}else{
+		body.style.backgroundColor = stats["scenecolor"];
+		body.style.color = stats["scenecolor2"];
+		if (stats["togglescenefade"] == true){
+			var text = document.getElementById("text");
+			text.style.WebkitAnimation = "fadein "+stats["scenefadetime"]; /* Safari and Chrome */
+			text.style.MozAnimation = "fadein "+stats["scenefadetime"]; /* Firefox */
+			text.style.msAnimation = "fadein "+stats["scenefadetime"]; /* Internet Explorer */
+			text.style.OAnimation = "fadein "+stats["scenefadetime"]; /* Opera */
+			text.style.Animation = "fadein "+stats["scenefadetime"];
+		}
+	}
+    this.fakeChoice = true;
+    this.choice(data, true);
+    delete this.fakeChoice;
 };
 
 Scene.prototype.standardResolution = function(option) {
@@ -718,28 +675,9 @@ Scene.prototype.nextNonBlankLine = function nextNonBlankLine(includingThisOne) {
     return line;
 };
 
-Scene.prototype.previousNonBlankLineNum = function previousNonBlankLineNum() {
-  var line;
-  var i = this.lineNum - 1;
-  while(isDefined(line = this.lines[i]) && !trim(line)) {
-    i--;
-  }
-  return i;
-};
-
-
-Scene.prototype.resetCheckedPurchases = function resetCheckedPurchases() {
-  for (var temp in this.temps) {
-    if (/^choice_purchased/.test(temp)) {
-      delete this.temps[temp];
-    }
-  }
-};
-
 // reset the page and invoke code after clearing the screen
 Scene.prototype.resetPage = function resetPage() {
     var self = this;
-    this.resetCheckedPurchases();
     clearScreen(function() {
       // save in the background, eventually
       self.save("");
@@ -808,25 +746,11 @@ Scene.prototype["goto"] = function scene_goto(line) {
     }
 };
 
-Scene.prototype.gosub = function scene_gosub(data) {
-    var label = /\S+/.exec(data)[0];
-    var rest = data.substring(label.length+1);
-    var args = [];
-    var stack = this.tokenizeExpr(rest);
-    while (stack.length) {
-      args.push(this.evaluateValueToken(stack.shift(), stack));
-    }
+Scene.prototype.gosub = function scene_gosub(label) {
     if (!this.temps.choice_substack) {
       this.temps.choice_substack = [];
     }
     this.temps.choice_substack.push({lineNum: this.lineNum, indent: this.indent});
-    // Works exactly the same as gosub_scene, putting args in this.temps.param.
-    // This means there's no notion of scope - param acts more like "registers" that
-    // get clobbered the next time a sub is called.
-    // This may be more intuitive to non-programmers than idea of scope?  Especially
-    // if temp normally doesn't follow scoping rules.  gosub_scene can serve this function anyway.
-    // The params can be retrieved and put in named temps with "params" command.
-    this.temps.param = args;
     this["goto"](label);
 };
 
@@ -838,35 +762,6 @@ Scene.prototype.gosub_scene = function scene_gosub_scene(data) {
     this.goto_scene(data);
 };
 
-Scene.prototype.params = function scene_params(data) {
-    // Name the parameters passed by gosub/gosub_scene.
-    // Rules should be the same as for "create."
-    // All parameters, even those not named, exposed as param_1, param_2 etc.
-    var words = /\w+/.exec(data);
-    var nextParamNum = 1;
-    this.temps.param_count = this.temps.param.length;
-    while (words) {
-        var varName = words[0];
-        this.validateVariable(varName);
-        if (this.temps.param.length < 1) {
-            throw new Error(this.lineMsg() + "No parameter passed for " + varName);
-        }
-        var paramVal = this.temps.param.shift();
-        this.temps[varName] = paramVal;
-        this.temps["param_" + nextParamNum] = paramVal;
-        nextParamNum++;
-        data = data.substring(varName.length+1);
-        words = /\w+/.exec(data);
-    }
-    // All remaining params are anonymous, but you still have to say "params"
-    // if you want any of them.
-    while (this.temps.param.length > 0) {
-        var paramVal = this.temps.param.shift();
-        this.temps["param_" + nextParamNum] = paramVal;
-        nextParamNum++;
-    }
-};
-
 Scene.prototype["return"] = function scene_return() {
     var stackFrame;
     if (this.temps.choice_substack && this.temps.choice_substack.length) {
@@ -875,21 +770,14 @@ Scene.prototype["return"] = function scene_return() {
       this.indent = stackFrame.indent;
     } else if (this.stats.choice_subscene_stack && this.stats.choice_subscene_stack.length) {
       stackFrame = this.stats.choice_subscene_stack.pop();
-      if (stackFrame.name == this.name) {
-        this.temps = stackFrame.temps;
-        this.lineNum = stackFrame.lineNum-1;
-        this.indent = stackFrame.indent;
-        return;
-      }
       this.finished = true;
       this.skipFooter = true;
-      var scene = new Scene(stackFrame.name, this.stats, this.nav, {debugMode:this.debugMode, secondaryMode:this.secondaryMode, saveSlot:this.saveSlot});
+      var scene = new Scene(stackFrame.name, this.stats, this.nav, {debugMode:this.debugMode, secondaryMode:this.secondaryMode});
       scene.temps = stackFrame.temps;
       scene.screenEmpty = this.screenEmpty;
       scene.prevLine = this.prevLine;
       scene.lineNum = stackFrame.lineNum;
       scene.indent = stackFrame.indent;
-      scene.accumulatedParagraph = this.accumulatedParagraph;
       scene.execute();
     } else if (!this.temps.choice_substack && !this.stats.choice_subscene_stack) {
       throw new Error(this.lineMsg() + "invalid return; gosub has not yet been called");
@@ -917,6 +805,57 @@ Scene.prototype["gotoref"] = function scene_gotoref(expression) {
 // *finish
 // halt the scene
 Scene.prototype.finish = function finish(buttonName) {
+	var body = document.getElementById("body");
+	if("isolateschemes" in stats){
+		if(stats["isolateschemes"] === true){
+			if (window.stats.scene.secondaryMode == "stats"){
+				body.style.backgroundColor = stats["statscreencolor"];
+				body.style.color = stats["statscreencolor2"];
+				if (stats["togglestatscreenfade"] == true){
+					var text = document.getElementById("text");
+					text.style.WebkitAnimation = "fadein "+stats["statscreenfadetime"]; /* Safari and Chrome */
+					text.style.MozAnimation = "fadein "+stats["statscreenfadetime"]; /* Firefox */
+					text.style.msAnimation = "fadein "+stats["statscreenfadetime"]; /* Internet Explorer */
+					text.style.OAnimation = "fadein "+stats["statscreenfadetime"]; /* Opera */
+					text.style.Animation = "fadein "+stats["statscreenfadetime"];
+				}
+			}else{
+				body.style.backgroundColor = stats["scenecolor"];
+				body.style.color = stats["scenecolor2"];
+				if (stats["togglescenefade"] == true){
+					var text = document.getElementById("text");
+					text.style.WebkitAnimation = "fadein "+stats["scenefadetime"]; /* Safari and Chrome */
+					text.style.MozAnimation = "fadein "+stats["scenefadetime"]; /* Firefox */
+					text.style.msAnimation = "fadein "+stats["scenefadetime"]; /* Internet Explorer */
+					text.style.OAnimation = "fadein "+stats["scenefadetime"]; /* Opera */
+					text.style.Animation = "fadein "+stats["scenefadetime"];
+				}
+			}
+		}
+		if(stats["isolateschemes"] === false){
+			body.style.backgroundColor = stats["scenecolor"];
+			body.style.color = stats["scenecolor2"];
+			if (stats["togglescenefade"] == true){
+				var text = document.getElementById("text");
+				text.style.WebkitAnimation = "fadein "+stats["scenefadetime"]; /* Safari and Chrome */
+				text.style.MozAnimation = "fadein "+stats["scenefadetime"]; /* Firefox */
+				text.style.msAnimation = "fadein "+stats["scenefadetime"]; /* Internet Explorer */
+				text.style.OAnimation = "fadein "+stats["scenefadetime"]; /* Opera */
+				text.style.Animation = "fadein "+stats["scenefadetime"];
+			}
+		}
+	}else{
+		body.style.backgroundColor = stats["scenecolor"];
+		body.style.color = stats["scenecolor2"];
+		if (stats["togglescenefade"] == true){
+			var text = document.getElementById("text");
+			text.style.WebkitAnimation = "fadein "+stats["scenefadetime"]; /* Safari and Chrome */
+			text.style.MozAnimation = "fadein "+stats["scenefadetime"]; /* Firefox */
+			text.style.msAnimation = "fadein "+stats["scenefadetime"]; /* Internet Explorer */
+			text.style.OAnimation = "fadein "+stats["scenefadetime"]; /* Opera */
+			text.style.Animation = "fadein "+stats["scenefadetime"];
+		}
+	}
     this.paragraph();
     this.finished = true;
     var self = this;
@@ -968,37 +907,26 @@ Scene.prototype.reset = function reset() {
 };
 
 Scene.prototype.parseGotoScene = function parseGotoScene(data) {
-  var sceneName, label, param = [], stack;
-
+  var sceneName, label;
   if (/[\[\{]/.test(data)) {
-    stack = this.tokenizeExpr(data);
+    var stack = this.tokenizeExpr(data);
     sceneName = this.evaluateReference(stack, {toLowerCase: false});
-    // Labels are required for arguments to avoid ambiguity
     if (stack.length) {
       label = this.evaluateReference(stack);
     }
-    while (stack.length) {
-      // Arguments when treating gosub_scene like a function call
-      param.push(this.evaluateValueToken(stack.shift(), stack));
+    if (stack.length) {
+      throw new Error(this.lineMsg() + "Invalid *goto_scene command; nothing should appear after the label " + label);
     }
   } else {
-    // scenes and labels can contain hyphens and other non-expression punctuation
-    // so we'll try to extract the first two words as the scene and label
-    var match = /(\S+)\s+(\S+)\s*(.*)/.exec(data);
-    if (match) {
-      sceneName = match[1];
-      label = match[2];
-      stack = this.tokenizeExpr(match[3]);
-      while (stack.length) {
-        // Arguments when treating gosub_scene like a function call
-        param.push(this.evaluateValueToken(stack.shift(), stack));
-      }
-    } else {
-      if (data === "") throw new Error(this.lineMsg() + "missing scene name");
-      sceneName = data;
+    var words = data.split(/ /);
+    sceneName = words[0];
+    if (words.length > 2) {
+      throw new Error(this.lineMsg() + "Invalid *goto_scene command; nothing should appear after the label " + words[1]);
+    } else if (words.length == 2) {
+      label = words[1];
     }
   }
-  return {sceneName:sceneName, label:label, param:param};
+  return {sceneName:sceneName, label:label};
 };
 
 // *goto_scene foo
@@ -1006,26 +934,12 @@ Scene.prototype.parseGotoScene = function parseGotoScene(data) {
 Scene.prototype.goto_scene = function gotoScene(data) {
     var result = this.parseGotoScene(data);
 
-    if (result.sceneName == this.name) {
-      if (typeof result.label === "undefined") {
-        this.lineNum = 0;
-      } else {
-        this["goto"](result.label);
-      }
-      this.temps = {choice_reuse:"allow", choice_user_restored:false, _choiceEnds:{}};
-      this.temps.param = result.param;
-      this.initialCommands = true;
-      return;
-    }
-
     this.finished = true;
     this.skipFooter = true;
-    var scene = new Scene(result.sceneName, this.stats, this.nav, {debugMode:this.debugMode, secondaryMode:this.secondaryMode, saveSlot:this.saveSlot});
+    var scene = new Scene(result.sceneName, this.stats, this.nav, {debugMode:this.debugMode, secondaryMode:this.secondaryMode});
     scene.screenEmpty = this.screenEmpty;
     scene.prevLine = this.prevLine;
-    scene.accumulatedParagraph = this.accumulatedParagraph;
     if (typeof result.label != "undefined") scene.targetLabel = {label:result.label, origin:this.name, originLine:this.lineNum};
-    if (typeof result.param != "undefined") scene.temps.param = result.param;
     scene.execute();
 };
 
@@ -1049,11 +963,6 @@ Scene.prototype.redirect_scene = function redirectScene(data) {
   });
 };
 
-Scene.prototype.product = function product(productId) {
-  if (!/^[a-z]+$/.test(productId)) throw new Error(this.lineMsg()+"Invalid product id: " +productId);
-  if (this.nav) this.nav.products[productId] = {};
-}
-
 Scene.prototype.restore_purchases = function scene_restorePurchases(data) {
   var self = this;
   var target = this.target;
@@ -1061,7 +970,7 @@ Scene.prototype.restore_purchases = function scene_restorePurchases(data) {
   var button = printButton("Restore Purchases", target, false,
     function() {
       safeCall(self, function() {
-          restorePurchases(null, function() {
+          restorePurchases(function() {
             self["goto"](data);
             self.finished = false;
             self.resetPage();
@@ -1078,13 +987,6 @@ Scene.prototype.check_purchase = function scene_checkPurchase(data) {
   this.finished = true;
   this.skipFooter = true;
   var self = this;
-  var productList = data.split(/ /);
-  for (var i = 0; i < productList.length; i++) {
-    var product = productList[i];
-    if (!this.nav.products[product] && product != "adfree") {
-      throw new Error(this.lineMsg() + "The product " + product + " wasn't declared in a *product command");
-    }
-  }
   checkPurchase(data, function(ok, result) {
     self.finished = false;
     self.skipFooter = false;
@@ -1112,10 +1014,6 @@ Scene.prototype.purchase = function purchase_button(data) {
   var product = result[1];
   var priceGuess = trim(result[2]);
   var label = trim(result[3]);
-  if (!this.nav.products[product] && product != "adfree") {
-    throw new Error(this.lineMsg() + "The product " + product + " wasn't declared in a *product command");
-  }
-  if (typeof this.temps["choice_purchased_"+product] === "undefined") throw new Error(this.lineMsg() + "Didn't check_purchases on this page");
   this.finished = true;
   this.skipFooter = true;
   var self = this;
@@ -1126,20 +1024,10 @@ Scene.prototype.purchase = function purchase_button(data) {
       self.resetPage();
     } else {
       if (price == "guess") price = priceGuess;
-      var prerelease = (typeof window !== "undefined" && window.releaseDate && window.isWeb && window.releaseDate > new Date());
-      var buttonText;
-      if (prerelease) {
-        buttonText = "Pre-Order It";
-      } else {
-        buttonText = "Buy It Now";
-      }
-      if (price != "hide") {
-        buttonText += " for " + price;
-      }
       var target = self.target;
       if (!target) target = document.getElementById('text');
       self.paragraph();
-      var button = printButton(buttonText, target, false,
+      var button = printButton("Buy It Now for " + price, target, false,
         function() {
           safeCall(self, function() {
               purchase(product, function() {
@@ -1155,19 +1043,27 @@ Scene.prototype.purchase = function purchase_button(data) {
       self.prevLine = "block";
       if (isRestorePurchasesSupported()) {
         self.prevLine = "text";
-        printLink(printParagraph("If you've already purchased, click here to "), "#", "restore purchases",
-          function(e) {
-            preventDefault(e);
+        printLink(target, "#", "Restore Purchases",
+          function() {
             safeCall(self, function() {
-                restorePurchases(product, function(purchased) {
-                  if (purchased) {
-                    self["goto"](label);
-                    self.finished = false;
-                    self.resetPage();
-                  } else {
-                    // refresh, in case we're on web showing a full-screen login. Not necessary on mobile? But, meh.
-                    if (!self.secondaryMode) clearScreen(loadAndRestoreGame);
-                  }
+                restorePurchases(function(error) {
+                  checkPurchase([product], function(ok, purchases) {
+                    if (ok && purchases[product]) {
+                      self["goto"](label);
+                      self.finished = false;
+                      self.resetPage();
+                    } else {
+                      if (error || !ok) {
+                        asyncAlert("Restore failed. Please try again.");
+                      } else {
+                        asyncAlert("Restore completed. This product is not yet purchased.");
+                      }
+                      if (ok) { // don't refresh if not OK, but should we refresh on error? assuming yes?
+                        // refresh, in case we're on web showing a full-screen login. Not necessary on mobile? But, meh.
+                        if (!self.secondaryMode) clearScreen(loadAndRestoreGame);
+                      }
+                    }
+                  });
                 });
             });
           }
@@ -1180,42 +1076,6 @@ Scene.prototype.purchase = function purchase_button(data) {
     }
   });
 };
-
-Scene.prototype.purchase_discount = function purchase_discount(line) {
-  this.paragraph();
-  var args = trim(String(line)).split(" ");
-  if (args.length != 5) throw new Error(this.lineMsg() + "expected five arguments, saw "+args.length+": " + line);
-  var product = args[0];
-  var expectedEndDateString = args[1];
-  var expectedEndDate = parseDateStringInCurrentTimezone(expectedEndDateString, this.lineNum+1);
-  var fullPriceGuess = this.replaceVariables(args[2]);
-  var discountedPriceGuess = this.replaceVariables(args[3]);
-  var label = args[4];
-  var startsWithDollar = /^\$/;
-  if (!startsWithDollar.test(fullPriceGuess)) {
-    throw new Error(this.lineMsg() + "full price guess "+fullPriceGuess+"doesn't start with dollar: " + line);
-  }
-  if (!startsWithDollar.test(discountedPriceGuess)) {
-    throw new Error(this.lineMsg() + "discounted price guess "+discountedPriceGuess+"doesn't start with dollar: " + line);
-  }
-  var prerelease = (typeof window !== "undefined" && window.releaseDate && window.isWeb && window.releaseDate > new Date());
-  var discountText;
-  if (prerelease) {
-    discountText = "[b]Buy now before the price increases![/b]";
-  } else {
-    discountText = "[b]On sale until "+shortMonthStrings[expectedEndDate.getMonth()+1]+" "+expectedEndDate.getDate()+"! Buy now before the price increases![/b]"
-  }
-  if (typeof printDiscount != "undefined") {
-    printDiscount(product, expectedEndDate.getYear()+1900, expectedEndDate.getMonth()+1, expectedEndDate.getDate(), discountText);
-  }
-  var priceGuess;
-  if (new Date().getTime() < expectedEndDate.getTime()) {
-    priceGuess = discountedPriceGuess;
-  } else {
-    priceGuess = fullPriceGuess;
-  }
-  this.purchase([product, priceGuess, label].join(" "));
-}
 
 Scene.prototype.print_discount = function print_Discount(line) {
   var result = /(\w+) (\d{4})-(\d{2})-(\d{2}) (.*$)/.exec(line);
@@ -1257,7 +1117,7 @@ Scene.prototype.create = function create(line) {
     var token = stack[0];
     if (!/STRING|NUMBER|VAR/.test(token.name)) complexError();
     if ("VAR" == token.name && !/^true|false$/i.test(token.value)) complexError();
-    if ("STRING" == token.name && /(\$|@)!?!?{/.test(token.value)) throw new Error(this.lineMsg() + "Invalid create instruction, value must be a simple string without ${} or @{}: " + line);
+    if ("STRING" == token.name && /\$!?!?{/.test(token.value)) throw new Error(this.lineMsg() + "Invalid create instruction, value must be a simple string without ${}: " + line);
     var value = this.evaluateExpr(stack);
     this.stats[variable] = value;
     if (this.nav) this.nav.startingStats[variable] = value;
@@ -1291,32 +1151,15 @@ Scene.prototype.getVar = function getVar(variable) {
     if (variable == "choice_register_allowed") return isRegisterAllowed();
     if (variable == "choice_registered") return typeof window != "undefined" && !!window.registered;
     if (variable == "choice_is_web") return typeof window != "undefined" && !!window.isWeb;
-    if (variable == "choice_is_steam") return typeof window != "undefined" && !!window.isSteamApp;
-    if (variable == "choice_is_ios_app") return typeof window != "undefined" && !!window.isIosApp;
     if (variable == "choice_is_advertising_supported") return typeof isAdvertisingSupported != "undefined" && !!isAdvertisingSupported();
     if (variable == "choice_is_trial") return !!(typeof isTrial != "undefined" && isTrial);
-    if (variable == "choice_release_date") {
-      if (typeof window != "undefined" && window.releaseDate) {
-        return simpleDateTimeFormat(window.releaseDate);
-      }
-      return "release day";
-    }
-    if (variable == "choice_prerelease") {
-      if (typeof window != "undefined" && window.releaseDate) {
-        return new Date() < window.releaseDate.getTime();
-      } else {
-        return false;
-      }
-    }
     if (variable == "choice_kindle") return false;
     if (variable == "choice_randomtest") return !!this.randomtest;
-    if (variable == "choice_quicktest") return false; // quicktest will explore "false" paths
     if (variable == "choice_restore_purchases_allowed") return isRestorePurchasesSupported();
     if (variable == "choice_save_allowed") return areSaveSlotsSupported();
     if (variable == "choice_time_stamp") return Math.floor(new Date()/1000);
-    if (variable == "choice_nightmode") return typeof isNightMode != "undefined" && isNightMode();
-    if ((!this.temps.hasOwnProperty(variable))) {
-        if ((!this.stats.hasOwnProperty(variable))) {
+    if ("undefined" === typeof this.temps[variable]) {
+        if ("undefined" === typeof this.stats[variable]) {
             throw new Error(this.lineMsg() + "Non-existent variable '"+variable+"'");
         }
         value = this.stats[variable];
@@ -1344,11 +1187,6 @@ Scene.prototype.setVar = function setVar(variable, value) {
         }
         this.stats[variable] = value;
         if (this.saveSlot == "temp") tempStatWrites[variable] = value;
-        // Implicit control flow flag is ideally set just once in startup.
-        // Removing these lines makes this not possible with quicktest.
-        if (variable == "implicit_control_flow" && this.nav) {
-            this.nav.startingStats["implicit_control_flow"] = value;
-        }
     } else {
         this.temps[variable] = value;
     }
@@ -1376,7 +1214,6 @@ Scene.prototype.parseOptions = function parseOptions(startIndent, choicesRemaini
     // then the nextIndent is 4 for "spaceship"
     var nextIndent = null;
     var options = [];
-    var choiceEnds = [];
     var line;
     var currentChoice = choicesRemaining[0];
     if (!currentChoice) currentChoice = "choice";
@@ -1387,18 +1224,8 @@ Scene.prototype.parseOptions = function parseOptions(startIndent, choicesRemaini
     var atLeastOneSelectableOption = false;
     var prevOption, ifResult;
     var startingLine = this.lineNum;
-    var self = this;
-    function removeModifierCommand(stripParethentical) {
-      if (stripParethentical) {
-        var openParen = line.indexOf("(")+1;
-        var closingParen = matchBracket(line, "()", openParen);
-        if (closingParen == -1) {
-          throw new Error(self.lineMsg() + "missing closing parenthesis");
-        }
-        line = trim(line.substr(closingParen+1));
-      } else {
-        line = trim(line.replace(/^\s*\*(\w+)(.*)/, "$2"));
-      }
+    function removeModifierCommand() {
+      line = trim(line.replace(/^\s*\*(\w+)(.*)/, "$2"));
       parsed = /^\s*\*(\w+)(.*)/.exec(line);
       if (parsed) {
         command = parsed[1].toLowerCase();
@@ -1427,8 +1254,7 @@ Scene.prototype.parseOptions = function parseOptions(startIndent, choicesRemaini
             if (choicesRemaining.length>1 && !suboptionsEncountered) {
                 throw new Error(this.lineMsg() + "invalid indent, there were subchoices remaining: [" + choicesRemaining.join(",") + "]");
             }
-            if (bodyExpected && 
-                    (this.temps._fakeChoiceDepth === undefined || this.temps._fakeChoiceDepth < 1)) {
+            if (bodyExpected && !this.fakeChoice) {
                 throw new Error(this.lineMsg() + "Expected choice body");
             }
             if (!atLeastOneSelectableOption) this.conflictingOptions("line " + (startingLine+1) + ": No selectable options");
@@ -1437,11 +1263,8 @@ Scene.prototype.parseOptions = function parseOptions(startIndent, choicesRemaini
             }
             this.rollbackLineCoverage();
             prevOption = options[options.length-1];
-            this.lineNum = this.previousNonBlankLineNum();
-            if (!prevOption.endLine) prevOption.endLine = this.lineNum+1;
-            for (i = 0; i < choiceEnds.length; i++) {
-                this.temps._choiceEnds[choiceEnds[i]] = this.lineNum;
-            }
+            if (!prevOption.endLine) prevOption.endLine = this.lineNum;
+            this.lineNum--;
             this.rollbackLineCoverage();
             return options;
         }
@@ -1511,7 +1334,6 @@ Scene.prototype.parseOptions = function parseOptions(startIndent, choicesRemaini
             } else if ("if" == command) {
               ifResult = this.parseOptionIf(data, command);
               if (ifResult) {
-                choiceEnds.push(this.lineNum);
                 inlineIf = ifResult.condition;
                 if (ifResult.result) {
                   line = ifResult.line;
@@ -1595,13 +1417,12 @@ Scene.prototype.parseOptions = function parseOptions(startIndent, choicesRemaini
         }
         if (!unselectable) atLeastOneSelectableOption = true;
     }
-    if (bodyExpected && 
-            (this.temps._fakeChoiceDepth === undefined || this.temps._fakeChoiceDepth < 1)) {
+    if (bodyExpected && !this.fakeChoice) {
         throw new Error(this.lineMsg() + "Expected choice body");
     }
-    if (!atLeastOneSelectableOption) this.conflictingOptions("line " + (startingLine+1) + ": No selectable options");
     prevOption = options[options.length-1];
     if (!prevOption.endLine) prevOption.endLine = this.lineNum;
+    if (!atLeastOneSelectableOption) this.conflictingOptions("line " + (startingLine+1) + ": No selectable options");
     return options;
 };
 
@@ -1662,15 +1483,10 @@ Scene.prototype.verifyOptionsMatch = function verifyOptionsMatch(prev, current) 
 
 // render the prompt and the radio buttons
 Scene.prototype.renderOptions = function renderOptions(groups, options, callback) {
-    var self = this;
-    function replaceVars(options) {
-      for (var i = 0; i < options.length; i++) {
-        var option = options[i];
-        option.name = self.replaceVariables(option.name);
-        if (option.suboptions) replaceVars(option.suboptions);
-      }
+    for (var i = 0; i < options.length; i++) {
+      var option = options[i];
+      option.name = this.replaceVariables(option.name);
     }
-    replaceVars(options);
     this.paragraph();
     printOptions(groups, options, callback);
 
@@ -1682,7 +1498,58 @@ Scene.prototype.renderOptions = function renderOptions(groups, options, callback
 // *page_break
 // pause and prompt the user to press "Next"
 Scene.prototype.page_break = function page_break(buttonName) {
-    if (this.screenEmpty) return;
+	var body = document.getElementById("body");
+	if("isolateschemes" in stats){
+		if(stats["isolateschemes"] === true){
+			if (window.stats.scene.secondaryMode == "stats"){
+				body.style.backgroundColor = stats["statscreencolor"];
+				body.style.color = stats["statscreencolor2"];
+				if (stats["togglestatscreenfade"] == true){
+					var text = document.getElementById("text");
+					text.style.WebkitAnimation = "fadein "+stats["statscreenfadetime"]; /* Safari and Chrome */
+					text.style.MozAnimation = "fadein "+stats["statscreenfadetime"]; /* Firefox */
+					text.style.msAnimation = "fadein "+stats["statscreenfadetime"]; /* Internet Explorer */
+					text.style.OAnimation = "fadein "+stats["statscreenfadetime"]; /* Opera */
+					text.style.Animation = "fadein "+stats["statscreenfadetime"];
+				}
+			}else{
+				body.style.backgroundColor = stats["scenecolor"];
+				body.style.color = stats["scenecolor2"];
+				if (stats["togglescenefade"] == true){
+					var text = document.getElementById("text");
+					text.style.WebkitAnimation = "fadein "+stats["scenefadetime"]; /* Safari and Chrome */
+					text.style.MozAnimation = "fadein "+stats["scenefadetime"]; /* Firefox */
+					text.style.msAnimation = "fadein "+stats["scenefadetime"]; /* Internet Explorer */
+					text.style.OAnimation = "fadein "+stats["scenefadetime"]; /* Opera */
+					text.style.Animation = "fadein "+stats["scenefadetime"];
+				}
+			}
+		}
+		if(stats["isolateschemes"] === false){
+			body.style.backgroundColor = stats["scenecolor"];
+			body.style.color = stats["scenecolor2"];
+			if (stats["togglescenefade"] == true){
+				var text = document.getElementById("text");
+				text.style.WebkitAnimation = "fadein "+stats["scenefadetime"]; /* Safari and Chrome */
+				text.style.MozAnimation = "fadein "+stats["scenefadetime"]; /* Firefox */
+				text.style.msAnimation = "fadein "+stats["scenefadetime"]; /* Internet Explorer */
+				text.style.OAnimation = "fadein "+stats["scenefadetime"]; /* Opera */
+				text.style.Animation = "fadein "+stats["scenefadetime"];
+			}
+		}
+	}else{
+		body.style.backgroundColor = stats["scenecolor"];
+		body.style.color = stats["scenecolor2"];
+		if (stats["togglescenefade"] == true){
+			var text = document.getElementById("text");
+			text.style.WebkitAnimation = "fadein "+stats["scenefadetime"]; /* Safari and Chrome */
+			text.style.MozAnimation = "fadein "+stats["scenefadetime"]; /* Firefox */
+			text.style.msAnimation = "fadein "+stats["scenefadetime"]; /* Internet Explorer */
+			text.style.OAnimation = "fadein "+stats["scenefadetime"]; /* Opera */
+			text.style.Animation = "fadein "+stats["scenefadetime"];
+		}
+	}
+	if (this.screenEmpty) return;
     if (!buttonName) buttonName = "Next";
     buttonName = this.replaceVariables(buttonName);
     this.paragraph();
@@ -1701,44 +1568,23 @@ Scene.prototype.page_break = function page_break(buttonName) {
 // *line_break
 // single line break in the middle of a paragraph
 Scene.prototype.line_break = function line_break() {
-    // We want to prevent a huge <p><br></p> between blocks
-    // so if there's existing text we'll just toss in a [n/]
-    // and if there's no text yet, we'll directly insert a <br>
-    if (this.accumulatedParagraph.length) {
-      this.accumulatedParagraph.push('[n/]');
-    } else {
-      println();
-    }
+    println("", this.target);
 };
 
 // *image
 // display named image
-Scene.prototype.image = function image(data, invert) {
-    this.paragraph();
+Scene.prototype.image = function image(data) {
     data = data || "";
     data = this.replaceVariables(data);
-    var match = /(\S+) (\S+)(.*)/.exec(data);
-    var source, alignment;
-    var alt = null;
-    if (match) {
-      var source = match[1];
-      var alignment = match[2];
-      var alt = trim(match[3]);
-    } else {
-      source = data;
-    }
-    if (source === "") throw new Error(this.lineMsg()+"*image requires the file name of an image");
+    var args = data.split(" ");
+    if (args > 2) throw new Error(this.lineMsg()+"Too many words; expected filename and alignment: " + data);
+    var source = args[0];
+    var alignment = args[1];
     alignment = alignment || "center";
     if (!/(right|left|center|none)/.test(alignment)) throw new Error(this.lineMsg()+"Invalid alignment, expected right, left, center, or none: " + data);
-    printImage(source, alignment, alt, invert);
+    printImage(source, alignment);
     if (this.verifyImage) this.verifyImage(source);
-    if (alignment == "none") this.prevLine = "text";
-    this.screenEmpty = false;
 };
-
-Scene.prototype.text_image = function textImage(data) {
-  this.image(data, "invert");
-}
 
 // *sound
 // play named sound file
@@ -1747,22 +1593,14 @@ Scene.prototype.sound = function sound(source) {
     if (this.verifyImage) this.verifyImage(source);
 };
 
-Scene.prototype.youtube = function youtube(slug) {
-  if (typeof printYoutubeFrame !== "undefined") {
-    printYoutubeFrame(slug);
-    this.prevLine = "block";
-    this.screenEmpty = false;
-  }
-}
-
 // *link
 // Display URL with anchor text
 Scene.prototype.link = function link(data) {
     var result = /^(\S+)\s*(.*)/.exec(data);
     if (!result) throw new Error(this.lineMsg() + "invalid line; this line should have an URL: " + data);
-    var href = result[1].replace(/\]/g, "%5D");
+    var href = result[1];
     var anchorText = trim(result[2]) || href;
-    this.printLine("[url="+href+"]"+anchorText+"[/url]");
+    printLink(this.target, href, anchorText);
     this.prevLine = "text";
     this.screenEmpty = false;
 };
@@ -1775,7 +1613,6 @@ Scene.prototype.link_button = function linkButton(data) {
     if (!result) throw new Error(this.lineMsg() + "invalid line; this line should have an URL: " + data);
     var href = result[1];
     var anchorText = trim(result[2]) || href;
-    this.paragraph();
     var target = this.target;
     if (!target) target = document.getElementById('text');
     printButton(anchorText, target, false, function() {
@@ -1860,11 +1697,63 @@ Scene.prototype.print = function scene_print(expr) {
     this.prevLine = "text";
     this.screenEmpty = false;
     this.printLine(value);
+    printx(' ', this.target);
 };
 
 // *input_text var
 // record text typed by the user and store it in the specified variable
 Scene.prototype.input_text = function input_text(line) {
+	var body = document.getElementById("body");
+	if("isolateschemes" in stats){
+		if(stats["isolateschemes"] === true){
+			if (window.stats.scene.secondaryMode == "stats"){
+				body.style.backgroundColor = stats["statscreencolor"];
+				body.style.color = stats["statscreencolor2"];
+				if (stats["togglestatscreenfade"] == true){
+					var text = document.getElementById("text");
+					text.style.WebkitAnimation = "fadein "+stats["statscreenfadetime"]; /* Safari and Chrome */
+					text.style.MozAnimation = "fadein "+stats["statscreenfadetime"]; /* Firefox */
+					text.style.msAnimation = "fadein "+stats["statscreenfadetime"]; /* Internet Explorer */
+					text.style.OAnimation = "fadein "+stats["statscreenfadetime"]; /* Opera */
+					text.style.Animation = "fadein "+stats["statscreenfadetime"];
+				}
+			}else{
+				body.style.backgroundColor = stats["scenecolor"];
+				body.style.color = stats["scenecolor2"];
+				if (stats["togglescenefade"] == true){
+					var text = document.getElementById("text");
+					text.style.WebkitAnimation = "fadein "+stats["scenefadetime"]; /* Safari and Chrome */
+					text.style.MozAnimation = "fadein "+stats["scenefadetime"]; /* Firefox */
+					text.style.msAnimation = "fadein "+stats["scenefadetime"]; /* Internet Explorer */
+					text.style.OAnimation = "fadein "+stats["scenefadetime"]; /* Opera */
+					text.style.Animation = "fadein "+stats["scenefadetime"];
+				}
+			}
+		}
+		if(stats["isolateschemes"] === false){
+			body.style.backgroundColor = stats["scenecolor"];
+			body.style.color = stats["scenecolor2"];
+			if (stats["togglescenefade"] == true){
+				var text = document.getElementById("text");
+				text.style.WebkitAnimation = "fadein "+stats["scenefadetime"]; /* Safari and Chrome */
+				text.style.MozAnimation = "fadein "+stats["scenefadetime"]; /* Firefox */
+				text.style.msAnimation = "fadein "+stats["scenefadetime"]; /* Internet Explorer */
+				text.style.OAnimation = "fadein "+stats["scenefadetime"]; /* Opera */
+				text.style.Animation = "fadein "+stats["scenefadetime"];
+			}
+		}
+	}else{
+		body.style.backgroundColor = stats["scenecolor"];
+		body.style.color = stats["scenecolor2"];
+		if (stats["togglescenefade"] == true){
+			var text = document.getElementById("text");
+			text.style.WebkitAnimation = "fadein "+stats["scenefadetime"]; /* Safari and Chrome */
+			text.style.MozAnimation = "fadein "+stats["scenefadetime"]; /* Firefox */
+			text.style.msAnimation = "fadein "+stats["scenefadetime"]; /* Internet Explorer */
+			text.style.OAnimation = "fadein "+stats["scenefadetime"]; /* Opera */
+			text.style.Animation = "fadein "+stats["scenefadetime"];
+		}
+	}
     var stack = this.tokenizeExpr(line);
     var variable = this.evaluateReference(stack);
     if ("undefined" === typeof this.temps[variable] && "undefined" === typeof this.stats[variable]) {
@@ -1872,7 +1761,9 @@ Scene.prototype.input_text = function input_text(line) {
     }
 
     var inputType = "text";
-    if (stack.length == 1 && stack[0].name == "VAR" && stack[0].value == "long") {
+    var longMatch = /^\S+(\s+long)/.exec(variable);
+    if (longMatch) {
+      variable = variable.substring(0, variable.length-longMatch[1].length);
       inputType = "textarea";
     }
     if ("undefined" === typeof this.temps[variable] && "undefined" === typeof this.stats[variable]) {
@@ -1883,7 +1774,7 @@ Scene.prototype.input_text = function input_text(line) {
     var self = this;
     printInput(this.target, inputType, function(value) {
       safeCall(self, function() {
-        value = trim(String(value));
+        value = ""+value || "";
         value = value.replace(/\n/g, "[n/]");
         if (self.nav) self.nav.bugLog.push("*input_text " + variable + " " + value);
         self.finished = false;
@@ -1904,13 +1795,6 @@ Scene.prototype.input_number = function input_number(data) {
       throw new Error(this.lineMsg() + "Non-existent variable '"+variable+"'");
     }
 
-    var simpleConstants;
-    if (stack.length == 2 && stack[0].name == "NUMBER" && stack[1].name == "NUMBER") {
-      simpleConstants = true;
-    } else {
-      simpleConstants = false;
-    }
-
     if (!stack.length) throw new Error(this.lineMsg() + "Invalid input_number statement, expected three args: varname min max");
     var minimum = this.evaluateValueToken(stack.shift(), stack);
     if (isNaN(minimum*1)) throw new Error(this.lineMsg() + "Invalid minimum, not numeric: " + minimum);
@@ -1920,12 +1804,7 @@ Scene.prototype.input_number = function input_number(data) {
     if (stack.length) throw new Error(this.lineMsg() + "Invalid input_number statement, expected three args: varname min max");
     if (isNaN(maximum*1)) throw new Error(this.lineMsg() + "Invalid maximum, not numeric: " + maximum);
 
-    // in quicktest, min and max can get mixed up as the interpreter "cheats" on if statements
-    // so quicktest will ignore min/max errors unless they're simple constants e.g. *input_number x 6 4
-    var checkMinMax = !this.quicktest || simpleConstants;
-    if (checkMinMax && parseFloat(minimum) > parseFloat(maximum)) {
-      throw new Error(this.lineMsg() + "Minimum " + minimum+ " should not be greater than maximum " + maximum);
-    }
+    if (parseFloat(minimum) > parseFloat(maximum)) throw new Error(this.lineMsg() + "Minimum " + minimum+ " should not be greater than maximum " + maximum);
 
     function isInt(x) {
        var y=parseInt(x,10);
@@ -1954,7 +1833,7 @@ Scene.prototype.input_number = function input_number(data) {
           asyncAlert("Please use a number greater than or equal to " + minimum);
           return;
         }
-        if (numValue > maximum * 1 && !this.quicktest) {
+        if (numValue > maximum * 1) {
           asyncAlert("Please use a number less than or equal to " + maximum);
           return;
         }
@@ -2149,7 +2028,6 @@ Scene.prototype.more_games = function more_games(now) {
     return;
   }
   var self = this;
-  this.paragraph();
   var target = this.target;
   if (!target) target = document.getElementById('text');
   var button = printButton("Play More Games Like This", target, false,
@@ -2177,13 +2055,7 @@ Scene.prototype.ending = function ending() {
       printFollowButtons();
       self.renderOptions([""], options, function(option) {
         if (option.restart) {
-          clearScreen(function() {
-            self.restart();
-            if (self.name === "startup") {
-              self.finished = false;
-              self.resetPage();
-            }
-          });
+          self.restart();
           return;
         } else if (option.moreGames) {
           self.more_games("now");
@@ -2203,45 +2075,27 @@ Scene.prototype.ending = function ending() {
 };
 
 Scene.prototype.restart = function restart() {
+  if (this.secondaryMode) throw new Error(this.lineMsg() + "Cannot *restart in " + this.secondaryMode + " mode");
+  this.finished = true;
   delayBreakEnd();
-  if (this.secondaryMode) {
-    if (this.secondaryMode == "stats") {
-      this.reset();
-      this.redirect_scene(this.nav.getStartupScene());
-    } else {
-      throw new Error(this.lineMsg() + "Cannot *restart in " + this.secondaryMode + " mode");
-    }
-  } else {
-    restartGame();
-  }
+  var self = this;
+  self.reset();
+  var startupScene = self.nav.getStartupScene();
+  var scene = new Scene(startupScene, self.stats, self.nav, {debugMode:self.debugMode, secondaryMode:false});
+  scene.resetPage();
+  
 };
 
-/* Subscribe options, in JSON format.
-"now" on mobile means we should immediately mailto: the subscribe address
-otherwise, we should display a Subscribe button which launches the mailto:
-On non-mailte: platforms, we ignore "now"
-
-"allowContinue" is the default; setting it to false blocks the "No, Thanks"
-button and the "Next" button after successfully subscribing
-Only Coming Soon pages use "allowContinue"
-
-"message" is the message we'll show to justify subscribing
-the default message is: "we'll notify you when our next game is ready!" */
-Scene.prototype.subscribe = function scene_subscribe(data) {
-  this.paragraph();
-  var options = {};
-  if (data) {
-    try {
-      options = JSON.parse(data);
-    } catch (e) {
-      throw new Error(this.lineMsg() + "Couldn't parse subscribe arguments: " + data);
-    }
-  }
+Scene.prototype.subscribe = function scene_subscribe(now) {
+  // "now" means we should immediately display the signup form
+  // otherwise, we should display a Subscribe button which displays the form
+  // On some platforms, "now" is impossible, so we ignore it.
+  now = ("now" == now);
   this.prevLine = "block";
   this.finished = true;
   this.skipFooter = true;
   var self = this;
-  subscribe(this.target, options, function(now) {
+  subscribe(this.target, now, function(now) {
     self.finished = false;
     // if "now" actually worked, then continue the scene
     // otherwise, reset the page before continuing
@@ -2254,13 +2108,7 @@ Scene.prototype.subscribe = function scene_subscribe(data) {
   });
 };
 
-Scene.prototype.restore_game = function restore_game(data) {
-  var cancelLabel;
-  if (data) {
-    var result = /^cancel=(\S+)$/.exec(data);
-    if (!result) throw new Error(this.lineMsg() + "invalid restore_game line: " + data);
-    cancelLabel = result[1];
-  }
+Scene.prototype.restore_game = function restore_game() {
   this.finished = true;
   this.skipFooter = true;
   var self = this;
@@ -2286,13 +2134,9 @@ Scene.prototype.restore_game = function restore_game(data) {
         clearScreen(function() {
           fetchEmail(function(defaultEmail){
             self.printLine("Please type your email address to identify yourself.");
-            self.paragraph();
-            promptEmailAddress(this.target, defaultEmail, "allowContinue", function(cancel, email) {
+            promptEmailAddress(this.target, defaultEmail, function(cancel, email) {
               if (cancel) {
                 self.finished = false;
-                if (typeof cancelLabel !== "undefined") {
-                  self["goto"](cancelLabel);
-                }
                 self.resetPage();
                 return;
               }
@@ -2318,13 +2162,9 @@ Scene.prototype.restore_game = function restore_game(data) {
         clearScreen(function() {
           fetchEmail(function(defaultEmail){
             self.printLine("Please type your email address to identify yourself.");
-            self.paragraph();
-            promptEmailAddress(this.target, defaultEmail, "allowContinue", function(cancel, email) {
+            promptEmailAddress(this.target, defaultEmail, function(cancel, email) {
               if (cancel) {
                 self.finished = false;
-                if (typeof cancelLabel !== "undefined") {
-                  self["goto"](cancelLabel);
-                }
                 self.resetPage();
                 return;
               }
@@ -2361,9 +2201,6 @@ Scene.prototype.restore_game = function restore_game(data) {
       } else {
         if (option.cancel) {
           self.finished = false;
-          if (typeof cancelLabel !== "undefined") {
-            self["goto"](cancelLabel);
-          }
           self.resetPage();
         } else {
           var state = option.state;
@@ -2557,12 +2394,14 @@ Scene.prototype.save_game = function save_game(destinationSceneName) {
     saveName.type="text";
     saveName.name="saveName";
     saveName.setAttribute("placeholder", "Type a name for your saved game");
-    saveName.setAttribute("style", "display:block; font-size: 25px; width: 90%; margin: 1rem 0");
+    saveName.setAttribute("style", "font-size: 25px; width: 90%;");
     form.appendChild(saveName);
 
-    var hideEmailForm = false;
-    // hideEmailForm = _global.automaticCloudStorage;
-    if (!hideEmailForm) {
+    if (_global.automaticCloudStorage) {
+      println("", form);
+    } else {
+      println("", form);
+      println("", form);
       println("Please login to the choiceofgames.com save system with your email address below.", form);
 
       var emailInput = document.createElement("input");
@@ -2571,8 +2410,11 @@ Scene.prototype.save_game = function save_game(destinationSceneName) {
       emailInput.name="email";
       emailInput.value=defaultEmail;
       emailInput.setAttribute("placeholder", "you@example.com");
-      emailInput.setAttribute("style", "display:block; font-size: 25px; width: 90%; margin: 1rem 0");
+      emailInput.setAttribute("style", "font-size: 25px; width: 90%;");
       form.appendChild(emailInput);
+
+      println("", form);
+      println("", form);
 
       var subscribeLabel = document.createElement("label");
       subscribeLabel.setAttribute("for", "subscribeBox");
@@ -2586,6 +2428,7 @@ Scene.prototype.save_game = function save_game(destinationSceneName) {
       form.appendChild(subscribeLabel);
     }
 
+    println("", form);
     var target = this.target;
     if (!target) target = document.getElementById('text');
     target.appendChild(form);
@@ -2620,7 +2463,7 @@ Scene.prototype.save_game = function save_game(destinationSceneName) {
         }
         saveStats.scene = {name:destinationSceneName};
 
-        if (hideEmailForm) {
+        if (_global.automaticCloudStorage) {
           clearScreen(function() {
             saveCookie(function() {
               recordSave(slot, function() {
@@ -2908,10 +2751,62 @@ Scene.prototype.deobfuscatePassword = function deobfuscatePassword(password) {
 };
 
 Scene.prototype.stat_chart = function stat_chart() {
-  this.paragraph();
+	var body = document.getElementById("body");
+	if("isolateschemes" in stats){
+		if(stats["isolateschemes"] === true){
+			if (window.stats.scene.secondaryMode == "stats"){
+				body.style.backgroundColor = stats["statscreencolor"];
+				body.style.color = stats["statscreencolor2"];
+				if (stats["togglestatscreenfade"] == true){
+					var text = document.getElementById("text");
+					text.style.WebkitAnimation = "fadein "+stats["statscreenfadetime"]; /* Safari and Chrome */
+					text.style.MozAnimation = "fadein "+stats["statscreenfadetime"]; /* Firefox */
+					text.style.msAnimation = "fadein "+stats["statscreenfadetime"]; /* Internet Explorer */
+					text.style.OAnimation = "fadein "+stats["statscreenfadetime"]; /* Opera */
+					text.style.Animation = "fadein "+stats["statscreenfadetime"];
+				}
+			}else{
+				body.style.backgroundColor = stats["scenecolor"];
+				body.style.color = stats["scenecolor2"];
+				if (stats["togglescenefade"] == true){
+					var text = document.getElementById("text");
+					text.style.WebkitAnimation = "fadein "+stats["scenefadetime"]; /* Safari and Chrome */
+					text.style.MozAnimation = "fadein "+stats["scenefadetime"]; /* Firefox */
+					text.style.msAnimation = "fadein "+stats["scenefadetime"]; /* Internet Explorer */
+					text.style.OAnimation = "fadein "+stats["scenefadetime"]; /* Opera */
+					text.style.Animation = "fadein "+stats["scenefadetime"];
+				}
+			}
+		}
+		if(stats["isolateschemes"] === false){
+			body.style.backgroundColor = stats["scenecolor"];
+			body.style.color = stats["scenecolor2"];
+			if (stats["togglescenefade"] == true){
+				var text = document.getElementById("text");
+				text.style.WebkitAnimation = "fadein "+stats["scenefadetime"]; /* Safari and Chrome */
+				text.style.MozAnimation = "fadein "+stats["scenefadetime"]; /* Firefox */
+				text.style.msAnimation = "fadein "+stats["scenefadetime"]; /* Internet Explorer */
+				text.style.OAnimation = "fadein "+stats["scenefadetime"]; /* Opera */
+				text.style.Animation = "fadein "+stats["scenefadetime"];
+			}
+		}
+	}else{
+		body.style.backgroundColor = stats["scenecolor"];
+		body.style.color = stats["scenecolor2"];
+		if (stats["togglescenefade"] == true){
+			var text = document.getElementById("text");
+			text.style.WebkitAnimation = "fadein "+stats["scenefadetime"]; /* Safari and Chrome */
+			text.style.MozAnimation = "fadein "+stats["scenefadetime"]; /* Firefox */
+			text.style.msAnimation = "fadein "+stats["scenefadetime"]; /* Internet Explorer */
+			text.style.OAnimation = "fadein "+stats["scenefadetime"]; /* Opera */
+			text.style.Animation = "fadein "+stats["scenefadetime"];
+		}
+	}
   var rows = this.parseStatChart();
   var target = this.target;
   if (!target) target = document.getElementById('text');
+
+  if (this.prevLine == "text") println("", target);
 
   var barWidth = 0;
   var standardFontSize = 0;
@@ -2937,16 +2832,7 @@ Scene.prototype.stat_chart = function stat_chart() {
     }
 
     if (biggestSpanWidth > spanMaxWidth) {
-      var newSize = Math.floor(standardFontSize * spanMaxWidth / biggestSpanWidth);
-      span1.parentNode.style.fontSize = newSize + "px";
-      if (window.getComputedStyle) {
-        // on Android, if the user is using non-standand styles, browser may try to ignore our font setting
-        var actual = parseInt(getComputedStyle(span1).fontSize, 10);
-        if (actual > newSize) {
-          newSize *= newSize / actual;
-          span1.parentNode.style.fontSize = newSize + "px";
-        }
-      }
+      span1.parentNode.style.fontSize = Math.floor(standardFontSize * spanMaxWidth / biggestSpanWidth) + "px";
     }
 
   }
@@ -2955,17 +2841,17 @@ Scene.prototype.stat_chart = function stat_chart() {
     var row = rows[i];
     var type = row.type;
     var variable = row.variable;
-    var value = this.evaluateExpr(this.tokenizeExpr(variable));
+    var value = this.getVar(variable);
     var label = this.replaceVariables(row.label);
     var definition = this.replaceVariables(row.definition || "");
 
     var statWidth, div, span, statValue;
     if (type == "text") {
       div = document.createElement("div");
-      setClass(div, "statText");
+      setClass(div, "statLine");
       span = document.createElement("span");
       if (trim(label) || trim(value)) {
-        printx(label + ": " + value, span);
+        printx("\u00a0\u00a0"+label + ": " + value, span);
       } else {
         // unofficial line_break
         printx(" ", span);
@@ -2993,7 +2879,7 @@ Scene.prototype.stat_chart = function stat_chart() {
       div.appendChild(span0);
       span = document.createElement("span");
       span.setAttribute("style", "float: right");
-      printx(this.replaceVariables(row.opposed_label)+": "+(100-value)+"%\u00a0\u00a0", span);
+      printx(row.opposed_label+": "+(100-value)+"%\u00a0\u00a0", span);
       div.appendChild(span);
       statValue = document.createElement("div");
       setClass(statValue, "statValue");
@@ -3033,7 +2919,7 @@ Scene.prototype.parseStatChart = function parseStatChart() {
         if (indent <= startIndent) {
             // it's over!
             this.rollbackLineCoverage();
-            this.lineNum = this.previousNonBlankLineNum();
+            this.lineNum--;
             this.rollbackLineCoverage();
             return rows;
         }
@@ -3105,37 +2991,13 @@ Scene.prototype.parseStatChart = function parseStatChart() {
           if (!/ /.test(data)) {
             variable = data;
             label = data;
-          } else if (/^\(/.test(data)) {
-            var parens = 0;
-            var closingParen = -1;
-            for (var i = 1; i < data.length; i++) {
-              var c = data.charAt(i);
-              if (c === "(") {
-                parens++;
-              } else if (c === ")") {
-                if (parens) {
-                  parens--;
-                } else {
-                  closingParen = i;
-                  break;
-                }
-              }
-            }
-            if (closingParen == -1) {
-              throw new Error(this.lineMsg() + "missing closing parenthesis");
-            }
-            variable = data.substring(1, closingParen);
-            label = trim(data.substring(closingParen+1))
-            if (label === "") {
-              label = variable;
-            }
           } else {
             result = /^(\S+) (.*)/.exec(data);
             if (!result) throw new Error(this.lineMsg() + "Bug! can't find a space when a space was found");
             variable = result[1];
             label = result[2];
           }
-          this.evaluateExpr(this.tokenizeExpr(variable));
+          this.getVar(variable);
           this.replaceVariables(label);
           line2 = this.lines[this.lineNum + 1];
           line2indent = this.getIndent(line2);
@@ -3152,30 +3014,6 @@ Scene.prototype.parseStatChart = function parseStatChart() {
     return rows;
 };
 
-// *timer Dec 25, 2016 9:30:00 PDT
-Scene.prototype.timer = function(dateString) {
-  var end;
-  if (dateString == "release") {
-    if (typeof window === "undefined" || !window.releaseDate) return;
-    end = window.releaseDate/1000;
-  } else {
-    end = Date.parse(dateString)/1000;
-  }
-  var now = new Date()/1000;
-  if (now < end) {
-    var target = this.target;
-    if (!target) {
-      target = document.createElement("p");
-      document.getElementById('text').appendChild(target);
-    }
-    var self = this;
-    showTicker(target, end, function() {
-      clearScreen(loadAndRestoreGame());
-    });
-  }
-}
-
-// *delay_break 1200
 Scene.prototype.delay_break = function(durationInSeconds) {
   if (isNaN(durationInSeconds * 1)) throw new Error(this.lineMsg() + "invalid duration");
   this.finished = true;
@@ -3185,10 +3023,8 @@ Scene.prototype.delay_break = function(durationInSeconds) {
     target = document.createElement("p");
     document.getElementById('text').appendChild(target);
   }
-  this.paragraph();
   var self = this;
   delayBreakStart(function(delayStart) {
-    window.blockRestart = true;
     var endTimeInSeconds = durationInSeconds * 1 + delayStart * 1;
     showTicker(target, endTimeInSeconds, function() {
       printButton("Next", target, false, function() {
@@ -3201,12 +3037,7 @@ Scene.prototype.delay_break = function(durationInSeconds) {
   });
 };
 
-// *delay_ending 1200 $2.99 $0.99
 Scene.prototype.delay_ending = function(data) {
-  // Steam doesn't do delay breaks and especially not skiponce
-  if (typeof window != "undefined" && !!window.isSteamApp) {
-    return this.ending();
-  }
   var args = data.split(/ /);
   var durationInSeconds = args[0];
   var fullPriceGuess = args[1];
@@ -3218,7 +3049,7 @@ Scene.prototype.delay_ending = function(data) {
   this.skipFooter = true;
   var self = this;
   checkPurchase("adfree", function(ok, result) {
-    if (result.adfree || !result.billingSupported) {
+    if (result.adfree || !result.billingSupported || (typeof window != "undefined" && window.isWeb)) {
       self.ending();
       return;
     }
@@ -3261,7 +3092,7 @@ Scene.prototype.delay_ending = function(data) {
               });
             });
           } else if (option == restorePurchasesOption) {
-            restorePurchases("adfree", function() {
+            restorePurchases(function() {
               clearScreen(loadAndRestoreGame);
             });
           } else {
@@ -3272,7 +3103,6 @@ Scene.prototype.delay_ending = function(data) {
         var target = document.getElementById("0").parentElement;
 
         delayBreakStart(function(delayStart) {
-          window.blockRestart = true;
           var endTimeInSeconds = durationInSeconds * 1 + delayStart * 1;
           showTicker(target, endTimeInSeconds, function() {
             clearScreen(function() {
@@ -3335,6 +3165,15 @@ Scene.prototype["if"] = function scene_if(line) {
 
 // TODO Rename this function to just skipBranch
 Scene.prototype.skipTrueBranch = function skipTrueBranch(inElse) {
+  var self = this;
+  function prevNonBlankLine() {
+    var line;
+    var i = self.lineNum - 1;
+    while(isDefined(line = self.lines[i]) && !trim(line)) {
+      i--;
+    }
+    return i;
+  }
   var startIndent = this.indent;
   var nextIndent = null;
   while (isDefined(line = this.lines[++this.lineNum])) {
@@ -3351,7 +3190,7 @@ Scene.prototype.skipTrueBranch = function skipTrueBranch(inElse) {
           // check to see if this is an *else or *elseif
           if (indent == startIndent) parsed = /^\s*\*(\w+)(.*)/.exec(line);
           if (!parsed || inElse) {
-              this.lineNum = this.previousNonBlankLineNum();
+              this.lineNum = prevNonBlankLine();
               this.rollbackLineCoverage();
               this.indent = indent;
               return;
@@ -3372,7 +3211,7 @@ Scene.prototype.skipTrueBranch = function skipTrueBranch(inElse) {
               this.lineNum = this.lineNum; // code coverage
               this["if"](data);
           } else {
-              this.lineNum = this.previousNonBlankLineNum();
+              this.lineNum = prevNonBlankLine();
               this.rollbackLineCoverage();
               this.indent = this.getIndent(this.nextNonBlankLine());
           }
@@ -3388,9 +3227,7 @@ Scene.prototype.skipTrueBranch = function skipTrueBranch(inElse) {
 };
 
 Scene.prototype["else"] = Scene.prototype.elsif = Scene.prototype.elseif = function scene_else(data, inChoice) {
-    // Authors can avoid using goto to get out of an if branch with:  *set implicit_control_flow true
-    // This avoids the error message at the end of the function.
-    if (inChoice || this.stats["implicit_control_flow"]) {
+    if (inChoice) {
       this.skipTrueBranch(true);
       return;
     }
@@ -3412,15 +3249,10 @@ Scene.prototype.tokenizeExpr = function tokenizeExpr(str) {
                 matched = true;
                 str = str.substr(token.length);
                 pos += token.length;
-                var item = {name:tokenType.name, value:token, pos:pos};
                 if ("WHITESPACE" == tokenType.name) {
                     break;
-                } else if ("CURLY_QUOTE" == tokenType.name) {
-                  throw new Error(this.lineMsg()+"Invalid use of curly smart quote: " + token + "\nUse straight quotes \" instead")
-                } else if ("FUNCTION" == tokenType.name) {
-                  item.func = /^\w+/.exec(token)[0];
                 }
-                stack.push(item);
+                stack.push({name:tokenType.name, value:token, pos:pos});
                 break;
             }
         }
@@ -3449,7 +3281,7 @@ Scene.prototype.evaluateExpr = function evaluateExpr(stack, parenthetical) {
 
     if (!stack.length) {
         if (parenthetical) {
-            throw new Error(this.lineMsg() + "Invalid expression, expected " + parenthetical);
+            throw new Error(this.lineMsg() + "Invalid expression, expected final closing parenthesis");
         }
         return value1;
     }
@@ -3462,26 +3294,9 @@ Scene.prototype.evaluateExpr = function evaluateExpr(stack, parenthetical) {
 
     // Since this isn't a singleton, it must be an operator
     operator = Scene.operators[token.value];
-    if (!operator) {
-      throw new Error(this.lineMsg() + "Invalid expression at char "+token.pos+", expected OPERATOR"+
-        (parenthetical?" or " + parenthetical : "")+
-        ", was: " + token.name + " [" + token.value + "]");
-    }
+    if (!operator) throw new Error(this.lineMsg() + "Invalid expression at char "+token.pos+", expected OPERATOR, was: " + token.name + " [" + token.value + "]");
 
-    if (token.value === '%') {
-      this.warning("this is a bare % sign, which should be replaced with %+, %-, or modulo if you're really advanced.");
-      this.warning("For more details on modulo, see: https://forum.choiceofgames.com/t/21176");
-    }
-
-    if (!stack[0]) {
-      throw new Error(this.lineMsg() + "Invalid expression at char "+token.pos+", expected something after a "+token.value);
-    }
-
-    if (stack[0].func == "auto") {
-      value2 = this.autobalance(stack, token, value1);
-    } else {
-      value2 = this.evaluateValueToken(getToken(), stack);
-    }
+    value2 = this.evaluateValueToken(getToken(), stack);
 
     // and do the operator
     result = operator(value1, value2, this.lineNum+1, this);
@@ -3493,10 +3308,10 @@ Scene.prototype.evaluateExpr = function evaluateExpr(stack, parenthetical) {
             if (parenthetical == token.name) {
                 return result;
             } else {
-                throw new Error(this.lineMsg() + "Invalid expression at char "+token.pos+", expected "+parenthetical+", was: " + token.name + " [" + token.value + "]");
+                throw new Error(this.lineMsg() + "Invalid expression at char "+token.pos+", expected closing parenthesis, was: " + token.name + " [" + token.value + "]");
             }
         } else {
-            throw new Error(this.lineMsg() + "Invalid expression, expected " + parenthetical);
+            throw new Error(this.lineMsg() + "Invalid expression, expected final closing parenthesis");
         }
     } else {
         // if not parenthetical, expect no more tokens
@@ -3521,9 +3336,10 @@ Scene.prototype.evaluateValueToken = function evaluateValueToken(token, stack) {
         value = this.evaluateExpr(stack, "CLOSE_CURLY");
         return this.getVar(value);
     } else if ("FUNCTION" == name) {
-        if (!this.functions[token.func]) throw new Error(this.lineMsg + "Unknown function " + token.func);
+        var functionName = /^\w+/.exec(token.value)[0];
+        if (!this.functions[functionName]) throw new Error(this.lineMsg + "Unknown function " + functionName);
         value = this.evaluateExpr(stack, "CLOSE_PARENTHESIS");
-        return this.functions[token.func].call(this, value);
+        return this.functions[functionName].call(this, value);
     } else if ("NUMBER" == name) {
         return token.value;
     } else if ("STRING" == name) {
@@ -3588,16 +3404,18 @@ Scene.prototype.evaluateReference = function evaluateReference(stack, options) {
     return name;
   } else {
     if (stack[0].name !== "VAR") throw new Error(this.lineMsg() + "Invalid expression; expected name, found " + stack[0].name + " at char " + stack[0].pos);
-    name = String(stack[0].value);
-    stack.shift();
-    while(stack.length && stack[0].name == "OPEN_SQUARE") {
-      var closingBracket = findClosingBracket(stack, "SQUARE", 1);
+    if (stack.length > 1 && stack[1].name === "OPEN_SQUARE") {
+      var closingBracket = findClosingBracket(stack, "SQUARE", 2);
       if (closingBracket == -1) throw new Error(this.lineMsg()+"Invalid expression, no closing array bracket at char " + stack[1].pos);
-      var index = this.evaluateExpr(stack.slice(1, closingBracket));
-      name += "_" + index;
+      var index = this.evaluateExpr(stack.slice(2, closingBracket));
+      name = String(stack[0].value) + "_" + index;
       stack.splice(0, closingBracket+1);
+      return normalizeCase(name);
+    } else {
+      name = stack[0].value;
+      stack.shift();
+      return normalizeCase(name);
     }
-    return normalizeCase(name);
   }
 };
 
@@ -3618,42 +3436,8 @@ Scene.prototype.functions = {
   },
   length: function(value) {
     return String(value).length;
-  },
-  auto: function() {
-    throw new Error(this.lineMsg()+"Invalid expression, auto() must come after a < or > symbol");
   }
 };
-
-Scene.prototype.autobalance = function autobalance(stack, operatorToken, value) {
-  if (operatorToken.name !== "INEQUALITY") {
-    throw new Error(this.lineMsg()+"Invalid expression, auto() must come after a < or > symbol");
-  }
-  stack.shift(); // remove auto function
-
-  if (stack.length < 4 ||
-    stack[0].name !== "NUMBER" ||
-    stack[1].name !== "COMMA" ||
-    !(stack[2].name == "VAR" || stack[2].name == "NUMBER") ||
-    stack[3].name !== "CLOSE_PARENTHESIS"
-  ) {
-    throw new Error(this.lineMsg()+"Invalid expression, auto() requires (percentage, id)");
-  }
-  var rateString = stack.shift().value;
-  var rate = parseFloat(rateString);
-  if (isNaN(rate) || rate < 1 || rate > 99) {
-    throw new Error(this.lineMsg()+"the first auto() parameter should be a number between 1 and 99: " + rateString);
-  }
-  stack.shift(); // comma
-  var id = stack.shift().value;
-  stack.shift(); // close parenthesis
-  var result = this.stats['auto' + '_' + this.name + '_' + id];
-  if (typeof result != "undefined") {
-    return result;
-  } else if (this.recordBalance) {
-    return this.recordBalance(value, operatorToken.value, rate, id);
-  }
-  return 50;
-}
 
 Scene.prototype.evaluateValueExpr = function evaluateValueExpr(expr) {
     var stack = this.tokenizeExpr(expr);
@@ -3883,7 +3667,7 @@ Scene.prototype.parseSceneList = function parseSceneList() {
       if (purchaseMatch) {
         line = purchaseMatch[2];
       }
-      if (!scenes.length && "startup" != String(line).toLowerCase()) scenes.push("startup");
+      if (!scenes.length && "startup" != line) scenes.push("startup");
       scenes.push(line);
   }
   return scenes;
@@ -3910,18 +3694,16 @@ Scene.prototype.achievement = function scene_achievement(data) {
   var achievementName = parsed[1];
   if (!/^[a-z][a-z0-9_]+$/.test(achievementName)) throw new Error(this.lineMsg()+"Invalid achievement name: " +achievementName);
 
+  
   if (this.nav.achievements.hasOwnProperty(achievementName)) {
     // this achievement already exists...
-    var preExisting = this.nav.achievements[achievementName];
-    if (!preExisting.lineNumber || preExisting.lineNumber == (this.lineNum+1)) {
-      // restarting/randomtest will naturally re-run *achievements; ignore those
+    if (!this.nav.achievements[achievementName].lineNumber) {
       // blow away pre-existing mygame.js achievements
       this.nav.achievements = {};
       this.nav.achievementList = [];
-      this.achievementTotal = 0;
-      this.seenAchievementTitles = {};
-    } else {
+    } else if (this.nav.achievements[achievementName].lineNumber != (this.lineNum+1)) {
       // don't allow redefining achievements
+      // restarting/randomtest will naturally re-run *achievements; ignore those
       throw new Error(this.lineMsg()+"Achievement "+achievementName+" already defined on line " + this.nav.achievements[achievementName].lineNumber);
     }
   }
@@ -3946,9 +3728,7 @@ Scene.prototype.achievement = function scene_achievement(data) {
   }
   var title = parsed[4];
   if (/(\$\{)/.test(title)) throw new Error(this.lineMsg()+"Invalid *achievement. ${} not permitted in achievement title: " + title);
-  if (/(\@\{)/.test(title)) throw new Error(this.lineMsg()+"Invalid *achievement. @{} not permitted in achievement title: " + title);
   if (/(\[)/.test(title)) throw new Error(this.lineMsg()+"Invalid *achievement. [] not permitted in achievement title: " + title);
-  if (title.length > 50) throw new Error(this.lineMsg()+"Invalid *achievement. Title must be 50 characters or fewer: " + title);
 
   // Get the description from the next indented line
   var line = this.lines[++this.lineNum];
@@ -3958,9 +3738,7 @@ Scene.prototype.achievement = function scene_achievement(data) {
   }
   var preEarnedDescription = trim(line);
   if (/(\$\{)/.test(preEarnedDescription)) throw new Error(this.lineMsg()+"Invalid *achievement. ${} not permitted in achievement description: " + preEarnedDescription);
-  if (/(\@\{)/.test(preEarnedDescription)) throw new Error(this.lineMsg()+"Invalid *achievement. @{} not permitted in achievement description: " + preEarnedDescription);
   if (/(\[)/.test(preEarnedDescription)) throw new Error(this.lineMsg()+"Invalid *achievement. [] not permitted in achievement description: " + preEarnedDescription);
-  if (preEarnedDescription.length > 200) throw new Error(this.lineMsg()+"Invalid *achievement. Pre-earned description must be 200 characters or fewer: " + preEarnedDescription);
 
   if (!visible) {
     if (preEarnedDescription.toLowerCase() != "hidden") throw new Error(this.lineMsg()+"Invalid *achievement. Hidden achievements must set their pre-earned description to 'hidden'.");
@@ -3976,9 +3754,7 @@ Scene.prototype.achievement = function scene_achievement(data) {
   if (indent) {
     postEarnedDescription = trim(line);
     if (/(\$\{)/.test(postEarnedDescription)) throw new Error(this.lineMsg()+"Invalid *achievement. ${} not permitted in achievement description: " + postEarnedDescription);
-    if (/(\@\{)/.test(postEarnedDescription)) throw new Error(this.lineMsg()+"Invalid *achievement. @{} not permitted in achievement description: " + postEarnedDescription);
     if (/(\[)/.test(postEarnedDescription)) throw new Error(this.lineMsg()+"Invalid *achievement. [] not permitted in achievement description: " + postEarnedDescription);
-    if (postEarnedDescription.length > 200) throw new Error(this.lineMsg()+"Invalid *achievement. Post-earned description must be 200 characters or fewer: " + postEarnedDescription);
   } else {
     // No indent means the next line is not a post-earned description
     this.rollbackLineCoverage();
@@ -4028,65 +3804,6 @@ Scene.prototype.bug = function scene_bug(message) {
   throw new Error(this.lineMsg() + message);
 };
 
-Scene.prototype.warning = function scene_warning(message) {
-  // quicktest implements this
-}
-
-Scene.prototype.feedback = function scene_feedback() {
-  if (typeof window == "undefined" || this.randomtest) return;
-  this.paragraph();
-  this.printLine("On a scale from 1 to 10, how likely are you to recommend this game to a friend?");
-  this.paragraph();
-  var options = [{name:"10 (Most likely)"}];
-  for (var i = 9; i > 1; i--) {
-    options.push({name:i});
-  }
-  options.push({name:"1 (Least likely)"});
-  options.push({name:"No response."});
-  var self = this;
-  this.renderOptions([""], options, function(option) {
-    var value = "null";
-    var numberMatch = /^(\d+)/.exec(option.name);
-    if (numberMatch) value = numberMatch[1]*1;
-    if (window.storeName) xhrAuthRequest("POST", "feedback", function(ok, response) {
-      if (window.console) console.log("ok", ok, response);
-    }, "game", window.storeName, "platform", platformCode(), "rating", value);
-    self.finished = false;
-    self.resetPage();
-  });
-  this.finished = true;
-};
-
-Scene.prototype.parseTrackEvent = function(data) {
-  var event = {};
-  var stack = this.tokenizeExpr(data);
-  if (!stack.length) throw new Error(this.lineMsg() + "Invalid track_event statement, expected at least two args: category and action");
-  event.category = this.evaluateValueToken(stack.shift(), stack);
-  if (!stack.length) throw new Error(this.lineMsg() + "Invalid track_event statement, expected at least two args: category and action");
-  event.action = this.evaluateValueToken(stack.shift(), stack);
-  if (stack.length) {
-    event.label = this.evaluateValueToken(stack.shift(), stack);
-    if (stack.length) {
-      event.value = this.evaluateValueToken(stack.shift(), stack);
-      if (stack.length) {
-        throw new Error(this.lineMsg() + "Invalid track_event statement, expected at most four args: category, action, label, value");
-      }
-      var intValue = parseInt(event.value, 10);
-      if (isNaN(intValue) || event.value != intValue || event.value.toString() != intValue.toString()) {
-        throw new Error(this.lineMsg() + "Invalid track_event statement, value must be an integer: " + event.value);
-      }
-    }
-  }
-  return event;
-}
-
-Scene.prototype.track_event = function track_event(data) {
-  var event = this.parseTrackEvent(data);
-  if (typeof ga !== "undefined") {
-    ga('send', 'event', event.category, event.action, event.label, event.value);
-  }
-}
-
 Scene.prototype.lineMsg = function lineMsg() {
     return this.name + " line " + (this.lineNum+1) + ": ";
 };
@@ -4107,7 +3824,7 @@ Scene.tokens = [
     {name:"CLOSE_CURLY", test:function(str){ return Scene.regexpMatch(str,/^\}/); } },
     {name:"OPEN_SQUARE", test:function(str){ return Scene.regexpMatch(str,/^\[/); } },
     {name:"CLOSE_SQUARE", test:function(str){ return Scene.regexpMatch(str,/^\]/); } },
-    {name:"FUNCTION", test:function(str){ return Scene.regexpMatch(str,/^(not|round|timestamp|log|length|auto)\s*\(/); } },
+    {name:"FUNCTION", test:function(str){ return Scene.regexpMatch(str,/^(not|round|timestamp|log|length)\s*\(/); } },
     {name:"NUMBER", test:function(str){ return Scene.regexpMatch(str,/^\d+(\.\d+)?\b/); } },
     {name:"STRING", test:function(str, line) {
             var i;
@@ -4123,26 +3840,20 @@ Scene.tokens = [
             throw new Error("line "+line+": Invalid string, open quote with no close quote: " + str);
         }
     },
-    {name:"CURLY_QUOTE", test:function(str){ return Scene.regexpMatch(str,/^[\u201c\u201d]/); } },
     {name:"WHITESPACE", test:function(str){ return Scene.regexpMatch(str,/^\s+/); } },
-    {name:"NAMED_OPERATOR", test:function(str){ return Scene.regexpMatch(str,/^(and|or|modulo)\b/); } },
+    {name:"BOOLEAN_OPERATOR", test:function(str){ return Scene.regexpMatch(str,/^(and|or)\b/); } },
     {name:"VAR", test:function(str){ return Scene.regexpMatch(str,/^\w*/); } },
     {name:"FAIRMATH", test:function(str){ return Scene.regexpMatch(str,/^%[\+\-]/); } },
     {name:"OPERATOR", test:function(str){ return Scene.regexpMatch(str,/^[\+\-\*\/\&\%\^\#]/); } },
     {name:"INEQUALITY", test:function(str){ return Scene.regexpMatch(str,/^[\!<>]\=?/); } },
-    {name:"EQUALITY", test:function(str){ return Scene.regexpMatch(str,/^=/); } },
-    {name:"COMMA", test:function(str){ return Scene.regexpMatch(str,/^,/); } }
+    {name:"EQUALITY", test:function(str){ return Scene.regexpMatch(str,/^=/); } }
     //
 ];
 Scene.operators = {
     "+": function add(v1,v2,line) { return num(v1,line) + num(v2,line); },
     "-": function subtract(v1,v2,line) { return num(v1,line) - num(v2,line); },
     "*": function multiply(v1,v2,line) { return num(v1,line) * num(v2,line); },
-    "/": function divide(v1,v2,line) {
-      v2 = num(v2, line);
-      if (v2 === 0) throw new Error("line "+line+": can't divide by zero");
-      return num(v1,line) / num(v2,line);
-    },
+    "/": function divide(v1,v2,line) { return num(v1,line) / num(v2,line); },
     "%": function modulo(v1,v2,line) { return num(v1,line) % num(v2,line); },
     "^": function exponent(v1,v2,line) { return Math.pow(num(v1,line), num(v2,line)); },
     "&": function concatenate(v1,v2) { return [v1,v2].join(""); },
@@ -4163,27 +3874,28 @@ Scene.operators = {
         if (!validValue) {
             throw new Error("line "+line+": Can't fairAdd to non-percentile value: " + v1);
         }
-        if (v2 > 0) {
-          var multiplier = (100 - v1) / 100;
-          var actualModifier = v2 * multiplier;
-          var value = 1 * v1 + actualModifier;
-          value = Math.floor(value);
-          if (value > 99) value = 99;
-          return value;
-        } else {
-          var multiplier = v1 / 100;
-          var actualModifier = (0-v2) * multiplier;
-          var value = v1 - actualModifier;
-          value = Math.ceil(value);
-          if (value < 1) value = 1;
-          return value;
-        }
+        var multiplier = (100 - v1) / 100;
+        var actualModifier = v2 * multiplier;
+        var value = 1 * v1 + actualModifier;
+        value = Math.floor(value);
+        if (value > 99) value = 99;
+        return value;
     },
     "%-": function fairSubtract(v1, v2, line) {
+        v1 = num(v1,line);
         v2 = num(v2,line);
-        return Scene.operators["%+"](v1,0-v2,line);
+        var validValue = (v1 >= 0 && v1 <= 100);
+        if (!validValue) {
+            throw new Error("line "+line+": Can't fairAdd to non-percentile value: " + v1);
+        }
+        var multiplier = v1 / 100;
+        var actualModifier = v2 * multiplier;
+        var value = v1 - actualModifier;
+        value = Math.ceil(value);
+        if (value < 1) value = 1;
+        return value;
     },
-    "=": function equals(v1,v2) { return v1 == v2 || String(v1) == String(v2); },
+    "=": function equals(v1,v2) { return v1 == v2; },
     "<": function lessThan(v1,v2,line) {
         return num(v1,line) < num(v2,line); },
     ">": function greaterThan(v1,v2,line) { return num(v1,line) > num(v2,line); },
@@ -4195,11 +3907,10 @@ Scene.operators = {
     },
     "or": function or(v1, v2, line) {
         return bool(v1,line) || bool(v2,line);
-    },
-    "modulo": function modulo(v1,v2,line) { return num(v1,line) % num(v2,line); },
+    }
 };
 
-Scene.initialCommands = {"create":1,"scene_list":1,"title":1,"author":1,"comment":1,"achievement":1,"product":1};
+Scene.initialCommands = {"create":1,"scene_list":1,"title":1,"author":1,"comment":1,"achievement":1};
 
 Scene.validCommands = {"comment":1, "goto":1, "gotoref":1, "label":1, "looplimit":1, "finish":1, "abort":1,
     "choice":1, "create":1, "temp":1, "delete":1, "set":1, "setref":1, "print":1, "if":1, "rand":1,
@@ -4207,10 +3918,8 @@ Scene.validCommands = {"comment":1, "goto":1, "gotoref":1, "label":1, "looplimit
     "goto_scene":1, "fake_choice":1, "input_text":1, "ending":1, "share_this_game":1, "stat_chart":1,
     "subscribe":1, "show_password":1, "gosub":1, "return":1, "hide_reuse":1, "disable_reuse":1, "allow_reuse":1,
     "check_purchase":1,"restore_purchases":1,"purchase":1,"restore_game":1,"advertisement":1,
-    "feedback":1,
     "save_game":1,"delay_break":1,"image":1,"link":1,"input_number":1,"goto_random_scene":1,
     "restart":1,"more_games":1,"delay_ending":1,"end_trial":1,"login":1,"achieve":1,"scene_list":1,"title":1,
     "bug":1,"link_button":1,"check_registration":1,"sound":1,"author":1,"gosub_scene":1,"achievement":1,
-    "check_achievements":1,"redirect_scene":1,"print_discount":1,"purchase_discount":1,"track_event":1,
-    "timer":1,"youtube":1,"product":1,"text_image":1,"params":1
+    "check_achievements":1,"redirect_scene":1,"print_discount":1
     };

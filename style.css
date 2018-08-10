@@ -526,7 +526,7 @@ button {
 button:hover {
     background-color: white;
     color: black;
-    border: 1px solid #e7e7e7;
+    border: 1px solid #1e3c72;
 }
 
 select {
@@ -546,4 +546,21 @@ select {
     background: #E6E6E6;
     overflow: hidden;
     box-shadow: none;
+    -webkit-transition-duration: 0.4s; /* Safari */
+     transition-duration: 0.4s;
+}
+select:focus, select:hover {
+    background-color: white;
+    border: 1px solid #1e3c72;
+}
+
+body.nightmode button{
+   color: black;
+   border: 1px solid #E6E6E6;
+   background-color: #E6E6E6;
+}
+body.nightmode button:hover, body.nightmode select:focus, body.nightmode select:hover {
+   color: white;
+   background-color: #09203f;
+   border: 1px solid #E6E6E6;
 }
