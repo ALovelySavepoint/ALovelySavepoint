@@ -1,0 +1,158 @@
+﻿*page_break
+你生前没少打RPG游戏，死后转生到一个魔王勇者世界观的RPG游戏世界，其实还挺满足的。
+*line_break
+虽然你现在还没见到勇者，但是你怀疑自己可能是勇者小队的一份子，原因是……
+*choice
+  #你是个强力的法师。
+    你是个法师。从古至今，哪个RPG游戏里没有法师的身影！
+    *set class "法师"
+    *set sword1_name "枯藤法杖"
+    *set sword1_description "制成这根法杖的枯藤与一颗法力水晶扭曲地长在了一起，成为施法者梦寐以求的优秀媒介。"
+    *goto pevent1
+  #你是个强力的祭司。
+    你是治疗啊！勇者要想打败魔王，肯定非常需要你。
+    *set class "祭司"
+    *set sword1_name "祷言"
+    *set sword1_description "从名字到外观都十分圣洁的巨大银白色十字架，对你的神术大有助益。"
+    *goto pevent1
+  #你是个强力的盗贼。
+    虽然名字难听，但是试问哪个勇者队伍里没有盗贼，哪个危险地图的深处没有宝箱呢？
+    *set class "盗贼"
+    *set sword1_name "龙牙匕首"
+    *set sword1_description "十分锋利，即使不是真的龙牙制成，也相差无几。"
+    *goto pevent1
+  #你是个强力的狂战士。
+    你物理攻击力超强，秒天秒地秒空气！虽然……作为队伍成员有点非主流，但是高伤害非常实用嘛！
+    *set class "狂战士"
+    *set sword1_name ""
+    *set sword1_description "。"
+    *goto pevent1
+  #你是个强力的弓箭手。
+    你物理攻击力超强，秒天秒地秒空气！虽然……作为队伍成员有点非主流，但是高伤害非常实用嘛！
+    *set class "弓箭手"
+    *set sword1_name ""
+    *set sword1_description "。"
+    *goto pevent1
+  #你是个强力的骑士。
+    你是个骑士，身披盔甲，手举盾牌，因为是光属性，还有小回复技能，可以说是铜墙铁壁了。
+    *set class "骑士"
+    *set sword1_name "誓约之盾"
+    *set sword1_description "。"
+    *goto pevent1
+  #你……长得美。
+    *set class "女主角"
+    能够拥有这样美貌的人，绝对不可能是路人！
+    *line_break
+    根据你的分析，你怀疑自己站的十有八九是女主位。
+    *line_break
+    *if (gender = "男性")
+        ……虽说你是个男的吧。不过谁也没有规定男性生物就不能站女主位嘛。
+    *if (gender = "双性")
+        不过，会让你站女主位的游戏，恐怕也不是什么正经RPG……
+    *goto pevent1
+*label pevent1
+*line_break
+现在，你要做的就是四处触发事件，静静等待勇者窜出来邀请你加入冒险队了！
+*line_break
+………………大概吧。
+*goto shop
+
+
+
+*label shop
+*temp buy_price_s 500
+*temp sales_price_s 0
+*temp sales_price_s2 0
+*temp sales_price_hp 0
+*temp buy_price_hp 100
+*temp buy_hp 0
+Hello and welcome to Generic Dan's shop!
+*label top
+*set sales_price_s round((buy_price_s /2) +sword1_dura)
+What can I help you with today?
+*line_break
+Money: $${money}
+*choice
+   *hide_reuse #Good morning sir, that's a very nice smile you got there!
+      *set buy_price_s -100
+      *set buy_price_hp -50
+      Listen you, I'll give you a discount if you promise to never say something so creepy ever again.
+      *page_break
+      *goto top
+   *if (sword1 = false) and (class != "女主角")
+      *selectable_if (money >= buy_price_s) #I'd like to buy the new $!{sword1_name}! [i]($${buy_price_s})[/i]
+         *set empty_inventory false
+         *set sword1 true
+         *set money -buy_price_s
+         *if (money < 0)
+            *set money 0
+         Thank you kindly, here's your new Chainsaw-sword 5000!
+         *page_break
+         *goto top
+   *if (sword1)
+      #I'd like to sell my $!{sword1_name}. [i]($${sales_price_s})[/i]
+         *set sword1 false
+         *if not ((cape) or (health_potion))
+            *set empty_inventory true
+         *set money +sales_price_s
+         Thank you kindly, I'll be taking your $!{sword1_name} then.
+         *page_break
+         *goto top
+   *if (sword1)
+      #(Bang the $!{sword1_name} on the counter)
+         *set sword1_dura %-10
+         Hey what are you doing, you bozo?! Stop that!
+         *page_break
+         *goto top
+   #I'd like to buy some Health Potions. [i]($${buy_price_hp} x1)[/i]
+      How many would you like?
+      *input_number buy_hp 0 99
+      *set sales_price_hp (100 * buy_hp)
+      So you would like to buy ${buy_hp} Health Potions? That'll be $${sales_price_hp} then.
+      *choice
+         *selectable_if (money >= sales_price_hp) #Yep. Here you go.
+            *set money -sales_price_hp
+            *if (money < 0)
+               *set money 0
+            *set empty_inventory false
+            *set health_potion true
+            *set hp_number buy_hp
+            A pleasure doing business with you!
+            *page_break
+            *goto top
+         #I can't afford that.
+            That's too bad, see anything else you like?
+            *page_break
+            *goto top
+   *hide_reuse *if (cape = false) #Are those Bat-Boy capes?
+      Yep, promotional item. We're giving them out free for the kids. Why, you want one? What color would you like?
+      *fake_choice
+         #Black
+            *label always_black
+            *set color "black"
+         #Black...
+            *set color "black"
+         #Black!
+            *goto always_black
+         #Pink!
+            *set color "pink"
+      *set material "polyester"
+      *set cape true
+      *set empty_inventory false
+      Here ya go...
+      *page_break
+      *goto top
+   *if (hp_number > 0) #(Drink a Health Potion)
+      *set hp_number -1
+      *if (hp_number = 0)
+         *set health_potion false
+      You chug down a cool refreshing health potion.
+      *page_break
+      *goto top
+   #I'm done shopping.
+      Okay, you come back again ya hear now? Have a nice day!
+      *page_break
+      *goto end
+
+*label end
+You walked out and immidiately got arrested.

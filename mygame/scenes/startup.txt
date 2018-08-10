@@ -1,0 +1,147 @@
+﻿*comment Copyright 2010 by Dan Fabulich.
+*comment
+*comment Dan Fabulich licenses this file to you under the
+*comment ChoiceScript License, Version 1.0 (the "License"); you may
+*comment not use this file except in compliance with the License.
+*comment You may obtain a copy of the License at
+*comment
+*comment  http://www.choiceofgames.com/LICENSE-1.0.txt
+*comment
+*comment See the License for the specific language governing
+*comment permissions and limitations under the License.
+*comment
+*comment Unless required by applicable law or agreed to in writing,
+*comment software distributed under the License is distributed on an
+*comment "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+*comment either express or implied.
+*title 和勇者谈恋爱
+*author 一个知名不具的邪恶软泥怪
+*scene_list
+  startup
+  npc
+  player
+  hostile_npc
+  ending
+  death
+*comment
+*comment -------------初始属性-------------
+*create name "暂缺"
+*create gender "暂缺"
+*create alignment 0
+*comment -------------初始属性-------------
+*comment
+*comment
+*comment -------------守序属性-------------
+*create class "暂缺"
+*create Insanity 0
+*create Blood 70
+*comment -------------守序属性-------------
+*comment
+*comment
+*comment -------------混乱属性-------------
+*create strength "暂缺"
+*create weakness "暂缺"
+*create strength "暂缺"
+*create defense "暂缺"
+*create intelligence "暂缺"
+*create magic_resistance "暂缺"
+*create constitution "暂缺"
+*create agility "暂缺"
+*create skill "暂缺"
+*comment -------------混乱属性-------------
+*comment
+*comment
+*comment -------------中立属性-------------
+*comment *create class "暂缺"
+*comment -------------中立属性-------------
+*comment
+*comment
+*create money 500
+*create empty_inventory true
+*create sword1 false
+*create sword1_name "Chainsaw-sword of Brutalizing"
+*create sword1_description "Chainsaw-sword of Brutalizing"
+*create sword1_dura 100
+*create cape false
+*create color ""
+*create material ""
+*create health_potion false
+*create hp_number 0
+
+
+*achievement lawful visible 5 玩家
+  在阵营选择中选择“守序”阵营即可获得。
+  选择“守序”阵营。
+*achievement neutral visible 5 NPC
+  在阵营选择中选择“中立”阵营即可获得。
+  选择“中立”阵营。
+*achievement chaotic visible 5 敌对NPC
+  在阵营选择中选择“混乱”阵营即可获得。
+  选择“混乱”阵营。
+*achievement futanari hidden 10 扶她
+  hidden
+  成为一名迷人的扶她。
+
+*sm_init 和勇者谈恋爱 | 5
+
+相信大家看到作者名也就明白了。这是一个使用ChoiceScript编写、
+*line_break
+由你们软泥怪旁友负责剧情、游戏制作及部分界面汉化的恋爱文字冒险游戏，
+*line_break
+是一部放飞自我、解放性癖之作，所以不要对它的可玩度和剧情深度有任何指望。
+*line_break
+如果需要[b]调整游戏界面[/b]（字体大小、背景颜色、翻页效果），请单击上面的“属性”按钮更改。
+*line_break
+
+
+那么，准备好开嫖了吗！
+
+*page_break 准备好啦！
+
+死后，你转生到了一个魔王勇者背景的RPG游戏里。
+你的名字是什么？
+*input_text name
+
+
+你的性别是？
+*choice
+    #男性
+       *set gender "男性"
+       你是一名男性。
+       *page_break 继续创建角色
+       *goto alignment
+    #女性
+       *set gender "女性"
+       你是一名女性。
+       *page_break 继续创建角色
+       *goto alignment
+    #中性
+       *set gender "中性"
+       你是中性。
+       *page_break 继续创建角色
+       *goto alignment
+    #双性
+       *set gender "双性"
+       你是一名双性人。
+       *achieve futanari
+       *page_break 继续创建角色
+       *goto alignment
+
+*label alignment
+如果能选择，你希望你是什么阵营呢？（重要选项）
+*choice
+  #守序
+   *set alignment "守序"
+   你的阵营是守序。
+   *achieve lawful
+   *goto_scene player
+  #中立
+   *set alignment "中立"
+   你的阵营是中立。
+   *achieve neutral
+   *goto_scene npc
+  #混乱
+   *set alignment "混乱"
+   你的阵营是混乱。
+   *achieve chaotic
+   *goto_scene hostile_npc

@@ -1,0 +1,65 @@
+*temp inventory ""
+*temp comma false
+*stat_chart
+    text name 姓名
+    text gender 性别
+*if (alignment = "混乱")
+    *stat_chart
+        text alignment 阵营
+    *line_break
+    *stat_chart
+        text strength 攻击
+        text defense 防御
+        text intelligence 魔攻
+        text magic_resistance 魔防
+        text constitution 体质
+        text agility 敏捷
+        text skill 能力
+    *finish
+*elseif (alignment = "中立")
+    *stat_chart
+        text alignment 阵营
+    *line_break
+    *stat_chart
+        text class 职业
+    *finish
+*elseif (alignment = "守序")
+    *stat_chart
+        text alignment 阵营
+    *line_break
+    [b]你[/b]
+    *stat_chart
+        text class 职业
+    *if (empty_inventory)
+      *set comma true
+      *set inventory &"什么也没有。"
+    *if (sword)
+      *set comma true
+      *set inventory &"$!{sword_name} （$!{sword_description}耐久度${sword_dura}。）"
+    *if (cape)
+       *if comma
+          *set inventory &"，"
+       *set comma true
+       *set inventory &"A $!{color} $!{material} Cape"
+    *if (health_potion)
+       *if comma
+          *set inventory &"，"
+       *set comma true
+       *set inventory &"Health Potion(s) (x${hp_number})"
+    *stat_chart
+        text inventory 装备
+        text money 金币
+    *line_break
+
+
+
+    [b]勇者[/b]
+    *stat_chart
+        opposed_pair Blood
+            人类
+            黑龙
+        percent Insanity 精神不安定
+    *finish
+*else
+    你还没有选择阵营。
+    *finish

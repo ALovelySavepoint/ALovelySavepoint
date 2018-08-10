@@ -1,0 +1,18 @@
+*comment NPC线路！
+*page_break
+死后你转生成了一个NPC。NPC也分很多种，而你转生成了……
+*choice
+  #商人。
+    你转生成了一个商人，而且是什么都卖的那种。RPG游戏中伤药、解毒药、复活药等都十分重要，许多玩家到后期一屯就是99瓶；装备更不用提，除了菜鸡，你不相信有哪个玩家看见新装备不买了换上。
+    *line_break
+    你很满意，至少你饿不死了。……不过，既然你已经是NPC了，应该也不可能饿死吧？
+    *set class "商人"
+    *goto nevent1
+  #旅店老板。
+    你是旅店老板。但凡是玩家，打游戏肯定都要到旅店回复状态的。
+    *label claws
+    In that case, you'll have powerful claws and a mighty roar!
+    *goto nevent1
+  #普通村民。
+    你成为了一个普通村民，可以自由活动。
+    *goto nevent1
