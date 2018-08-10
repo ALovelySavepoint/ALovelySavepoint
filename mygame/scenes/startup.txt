@@ -56,6 +56,7 @@
 *comment -------------中立属性-------------
 *comment
 *comment
+*comment-------------Inventory-------------
 *create money 500
 *create empty_inventory true
 *create sword1 false
@@ -67,8 +68,19 @@
 *create material ""
 *create health_potion false
 *create hp_number 0
-
-
+*comment -------------Inventory-------------
+*comment
+*comment
+*comment -------------CS Fade & Color Mod-------------
+*create scenecolor ""
+*comment 用#六进制表示，背景色
+*create scenecolor2 ""
+*comment 用#六进制表示，字体颜色
+*create togglescenefade false
+*create fadetime "10s"
+*comment -------------CS Fade & Color Mod-------------
+*comment
+*comment
 *achievement lawful visible 5 玩家
   在阵营选择中选择“守序”阵营即可获得。
   选择“守序”阵营。
@@ -97,12 +109,11 @@
 那么，准备好开嫖了吗！
 
 *page_break 准备好啦！
-
 死后，你转生到了一个魔王勇者背景的RPG游戏里。
 你的名字是什么？
 *input_text name
 
-
+*set togglescenefade true
 你的性别是？
 *choice
     #男性
