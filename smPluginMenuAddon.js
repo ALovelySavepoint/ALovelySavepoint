@@ -63,7 +63,7 @@ var smPluginMenuAddon = {
 	"currentSlot": "0",
 	"CSS":
 		"#quickSaveMenu {\
-			margin: 5px 19px 5px 0px;\
+			margin: 5px 19px 5px -2px;\
 			width: 100px;\
 		}"
 }

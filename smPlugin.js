@@ -139,7 +139,7 @@ Scene.prototype.sm_load = function sm_load(data) {
         doPrompt = str_to_boolean(doPrompt);
 
     if (!localStorage[saveMod.game_id + "_savemod_data_" + args[0]]) {
-         alertify.error("There is no saved data!" ); return;
+         alertify.error("存档数据未找到！" ); return;
     }
 
     if (doPrompt) {
@@ -202,12 +202,12 @@ Scene.prototype.sm_save = function sm_save(data) {
 				sm_ProcessSave(saveSlot, saveName);
 			}
 			else {
-				alertify.error("Game wasn't saved!");
+				alertify.error("存档未成功！");
 				return;
 			}
 		}
 		else {
-			alertify.error("Game wasn't saved!");
+			alertify.error("存档未成功！");
 			return;
 		}
 	}
@@ -231,7 +231,7 @@ function sm_ProcessSave(saveSlot, saveName) {
 		localStorage[saveMod.game_id + "_savemod_name_" + saveSlot] = saveName;
 	}
 	stats["savemod_slot_" + saveSlot] = saveName;
-	alertify.success(saveName + "成功保存！" );
+	alertify.success(saveName + "存档成功！" );
 }
 
 Scene.prototype.sm_delete = function sm_delete(data) {
@@ -263,7 +263,7 @@ Scene.prototype.sm_delete = function sm_delete(data) {
                 localStorage.removeItem(saveID);
                 localStorage.removeItem(saveData);
                 stats["savemod_slot_" + data] = "No Data";
-                alertify.success("Deletion succesful!" );
+                alertify.success("删除成功！" );
             }
             else {
                 return;
@@ -318,7 +318,7 @@ Scene.prototype.restore_localStorage = function restore_localStorage(saveSlot) {
             restoreGame(state, null, /*userRestored*/false);
           })
         }, "", state.stats, state.temps, state.lineNum, state.indent, this.debugMode, this.nav);
- alertify.success("Load succesful!" );
+ alertify.success("读档成功！" );
 }
 
 //Overwrites a native cs interpreter function
@@ -366,7 +366,7 @@ function getSaveDate() {
         var mins = date.getMinutes();
         date = day + "/" + month + "/" + year;
         var time = hours + ":" + mins;
-		var saveName = "Autosave on the " + date + " at " + time;
+		var saveName = date + " " + time + " 自动存档";
 		return saveName;
 }
 })();

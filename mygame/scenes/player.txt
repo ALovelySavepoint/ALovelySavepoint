@@ -1,19 +1,20 @@
-﻿*page_break
-你生前没少打RPG游戏，死后转生到一个魔王勇者世界观的RPG游戏世界，其实还挺满足的。
+﻿*page_break 进入游戏
+你生前没少打RPG游戏，死后转生到一个魔王勇者世界观的RPG游戏世界，其实还挺高兴，生活得也挺不错的。
+只不过，前段时间，魔王又复活了。好在受到神的指引的勇者已经踏上了讨伐魔王的征程。按照一般剧情发展，正义的勇者一方肯定能赢，不久世界就会恢复平静了。你倒不是担心这个。
 *line_break
-虽然你现在还没见到勇者，但是你怀疑自己可能是勇者小队的一份子，原因是……
+你担心的问题是：虽然还没见到勇者，但你怀疑自己可能是勇者小队的一份子。原因是你目前所在的城镇是勇者的必经之路，而且……
 *choice
   #你是个强力的法师。
-    你是个法师。从古至今，哪个RPG游戏里没有法师的身影！
+    你是个大法师。从古至今，哪个RPG游戏里没有法师的身影！
     *set class "法师"
     *set sword1_name "枯藤法杖"
     *set sword1_description "制成这根法杖的枯藤与一颗法力水晶扭曲地长在了一起，成为施法者梦寐以求的优秀媒介。"
     *goto pevent1
   #你是个强力的祭司。
-    你是治疗啊！勇者要想打败魔王，肯定非常需要你。
+    你是个治疗！勇者要想打败魔王，肯定非常需要你的帮助。
     *set class "祭司"
     *set sword1_name "祷言"
-    *set sword1_description "从名字到外观都十分圣洁的巨大银白色十字架，对你的神术大有助益。"
+    *set sword1_description "从名字到外观都十分圣洁的巨大银白色十字架，对神术大有助益。"
     *goto pevent1
   #你是个强力的盗贼。
     虽然名字难听，但是试问哪个勇者队伍里没有盗贼，哪个危险地图的深处没有宝箱呢？
@@ -21,23 +22,24 @@
     *set sword1_name "龙牙匕首"
     *set sword1_description "十分锋利，即使不是真的龙牙制成，也相差无几。"
     *goto pevent1
+  #你是个强力的弓箭手。
+    你作为弓箭手，百步穿杨。此外，你掌握的生存技能也必然能成为冒险的一大助力。
+    *set class "弓箭手"
+    *set sword1_name "湍流"
+    *set sword1_description "轻盈又有韧性的长弓，是每一个弓箭手的毕生追求。"
+    *goto pevent1
+  #你是个强力的骑士。
+    你是个骑士，身披盔甲，手举盾牌，因为是光属性，还有小回复技能，可谓是铜墙铁壁了。
+    *set class "骑士"
+    *set sword1_name "白银誓约"
+    *set sword1_description "坚固结实的盾牌，外表光洁，几乎看不见划痕，仿佛永远不会破损。"
+    *set sword1_dura 200
+    *goto pevent1
   #你是个强力的狂战士。
     你物理攻击力超强，秒天秒地秒空气！虽然……作为队伍成员有点非主流，但是高伤害非常实用嘛！
     *set class "狂战士"
-    *set sword1_name ""
-    *set sword1_description "。"
-    *goto pevent1
-  #你是个强力的弓箭手。
-    你物理攻击力超强，秒天秒地秒空气！虽然……作为队伍成员有点非主流，但是高伤害非常实用嘛！
-    *set class "弓箭手"
-    *set sword1_name ""
-    *set sword1_description "。"
-    *goto pevent1
-  #你是个强力的骑士。
-    你是个骑士，身披盔甲，手举盾牌，因为是光属性，还有小回复技能，可以说是铜墙铁壁了。
-    *set class "骑士"
-    *set sword1_name "誓约之盾"
-    *set sword1_description "。"
+    *set sword1_name "光焰"
+    *set sword1_description "又厚又重，还微微发着热，不知道是用什么材质做出来的，但很趁手。"
     *goto pevent1
   #你……长得美。
     *set class "女主角"
@@ -46,27 +48,278 @@
     根据你的分析，你怀疑自己站的十有八九是女主位。
     *line_break
     *if (gender = "男性")
-        ……虽说你是个男的吧。不过谁也没有规定男性生物就不能站女主位嘛。
+        ……虽然说你是个男的吧。不过谁也没有规定男性生物就不能站女主位嘛。
     *if (gender = "双性")
         不过，会让你站女主位的游戏，恐怕也不是什么正经RPG……
     *goto pevent1
+
 *label pevent1
+*page_break 继续
+不出你所料的话，很快勇者就会冒出来主动邀请你加入冒险队了！………大概吧。
 *line_break
-现在，你要做的就是四处触发事件，静静等待勇者窜出来邀请你加入冒险队了！
-*line_break
-………………大概吧。
-*goto shop
+
+*label beforehearrives
+*temp lampuse false
+*temp potionshopfirsttime true
+*temp groceryfirsttime true
+*temp time 4
+*label return_from_town_or_forest
+*if (time = 4)
+    现在是清晨，你的时间还很充足。你打算去哪里呢？
+    *comment 7
+    *goto townorforest
+*elseif ((time = 3) and (lampuse != true))
+    快中午了。你现在想做什么？
+    *comment 11
+    *goto townorforest
+*elseif ((time = 2) and (lampuse != true))
+    下午了。现在你想去哪？
+    *comment 15
+    *goto townorforest
+*elseif ((time = 1) and (lampuse != true))
+    傍晚了。剩下的时间不多了。现在要做什么？
+    *comment 19
+    *goto townorforest
+*elseif ((time = 0) and (lampuse != true))
+    已经深夜了。还想做什么吗？
+    *comment 23
+    *goto townorforest
+*elseif ((time = 1) and (lampuse))
+    有了灯，你就不用担心看不见了。不过你现在直打哈欠，估计也浪不了多长时间了。现在想去哪？
+    *goto townorforest
+*else
+    你现在熬过劲儿了，反而不困了。但是再熬下去你总感觉自己快猝死了。现在……？
+*label townorforest
+*choice
+  *selectable_if (time != 0) #在城镇看看。
+    *set time -1
+    你决定留在城镇里。反正外面都是魔物，在城里起码安全一点。
+    *goto town
+  *selectable_if (time != 0) #去森林探险。
+    *set time -1
+    反正闲着也是闲着，你决定去森林逛逛。
+    *goto forest
+  *selectable_if (time != 0) #什么都不想干，歇着吧。
+    你决定去睡觉。
+    *goto player_rest
+  *if (lampuse)
+    *selectable_if (time = 0) #活命要紧，还是睡吧。
+      你想了想觉得活命要紧，还是趁早睡吧。
+      *goto player_rest
+  *if (time = 0) and (lampuse = false)
+    #不浪了，睡觉。
+      天色太晚了，还是睡吧。
+      *goto player_rest
+  *if (time = 0) and (lamp)
+      #拿出提灯。
+        你拎出了从杂货店买来的提灯。
+        *set lampuse true
+        *set time +1
+        *goto beforehearrives
 
 
+*label town
+*page_break 城镇
+你所在的城镇十分繁荣。你想去哪里呢？
+*choice
+  #药剂店。
+    你走进了药剂店。
+    *page_break 药剂店
+    *goto potionshop
+  #杂货店。
+    *page_break 杂货店
+    *goto grocery
+  #装备店。
+    暂时没开放！
+    *ending
+  #礼品店。
+    暂时没开放！
+    *ending
+  #没什么特别想去的地方，还是回去吧。
+    *goto return_from_town_or_forest
 
-*label shop
+*comment ------------药剂店------------------
+*comment ------------------------------------
+*label potionshop
+*temp sales_price_hp 0
+*temp buy_price_flask 30
+*temp sales_price_flask 0
+*temp buy_price_hp 50
+*temp buy_hp 0
+*label potiontop
+*set sales_price_flask buy_price_flask / 2
+*if (potionshopfirsttime)
+  药剂店老板捣鼓着手里的炼金瓶，听见你走进来的声音，头也不抬地问：“要买什么？”
+  *line_break
+  这个服务态度很完蛋啊。你心想。
+
+
+  你当前拥有${money}G。
+  *set potionshopfirsttime false
+  *goto potionchoice
+*else
+  药剂店老板继续和他的药水做抗争：“还有吗？”
+
+
+  你当前拥有${money}G。
+  *goto potionchoice
+
+*label potionchoice
+*choice
+   *hide_reuse #套个近乎，问问他在做什么。
+      *set buy_price_flask round(buy_price_flask + (buy_price_flask /6))
+      *set buy_price_hp round(buy_price_hp + (buy_price_hp /6))
+      店主皱了皱眉：“你闭嘴挑东西就是了，别和我来这套。我忙着呢。”
+      *page_break 放弃
+      *goto potiontop
+   *if (flask = false)
+      *selectable_if (money >= buy_price_flask) #炼金用的烧瓶。 [i](${buy_price_flask}G)[/i]
+         *set empty_inventory false
+         *set flask true
+         *set money -buy_price_flask
+         *if (money < 0)
+            *set money 0
+         闻言店主露出了诧异的表情，但也没多说什么，接过你的金币，随手找了个空着的烧瓶递给了你。
+         *page_break 收下烧瓶
+         *goto potiontop
+   *if (flask)
+       #把烧瓶卖给他。 [i]($${sales_price_flask})[/i]
+          *set flask false
+          *if ((sword1 = false) and (health_potion = false)) and ((lamp = false) and (forestmap = false))
+             *set empty_inventory true
+          *set money +sales_price_flask
+          “行吧。”店主把烧瓶收了回去。
+          *page_break 接过金币
+          *goto potiontop
+   #伤药。 [i](${buy_price_hp}G x1)[/i]
+      店主扬了扬下巴：“都在那儿。要多少看着拿吧。”
+      *input_number buy_hp 0 99
+      *set sales_price_hp (buy_price_hp * buy_hp)
+      一共${buy_hp}瓶是吧？${sales_price_hp}G。
+      *choice
+         *selectable_if (money >= sales_price_hp) #成交。
+            *set money -sales_price_hp
+            *if (money < 0)
+               *set money 0
+            *set empty_inventory false
+            *set health_potion true
+            *set hp_number buy_hp
+            店主收下了你的金币。
+            *page_break 再看看别的
+            *goto potiontop
+        *if (money < sales_price_hp)
+            #我钱不够。
+              店主“哦”了一声：“那算了。”
+              *page_break 再看看别的
+              *goto potiontop
+        *else
+            #算了，不想买了。
+            店主“哦”了一声：“那算了。”
+            *page_break 再看看别的
+            *goto potiontop
+   #不买了。
+      “期待您的再次光临。”店主随口说。
+      *line_break
+      看他那爱答不理的德行，你对这番话的真实性十分怀疑。
+      *page_break 离开药剂店
+      *goto town
+*comment ------------药剂店------------------
+*comment ------------------------------------
+*comment ------------------------------------
+*comment ------------杂货店------------------
+*comment ------------------------------------
+*label grocery
+*temp sales_price_lamp 0
+*temp buy_price_lamp 50
+*temp buy_price_forestmap 50
+*temp sales_price_forestmap 0
+*label grocerytop
+*set sales_price_lamp buy_price_lamp /2
+*set sales_price_lamp buy_price_forestmap /2
+*if (groceryfirsttime)
+  你一走进门，老板就热情洋溢地欢迎你：“想买点什么，尽管开口！”
+
+
+  你当前拥有${money}G。
+  *set groceryfirsttime false
+  *goto grocerychoice
+*else
+  “还有什么想要的吗？”
+
+
+  你当前拥有${money}G。
+  *goto grocerychoice
+
+*label grocerychoice
+*choice
+  *if (lamp = false)
+    *selectable_if (money >= buy_price_lamp) #提灯。 [i](${buy_price_lamp}G)[/i]
+        *set empty_inventory false
+        *set lamp true
+        *set money -buy_price_lamp
+        *if (money < 0)
+          *set money 0
+        店主把提灯给你，又送了你一小份灯油。
+        *page_break 收下提灯和灯油
+        *goto grocerytop
+  *if (lamp)
+     #把提灯卖给他。 [i]($${sales_price_lamp})[/i]
+        *set lamp false
+        *if ((sword1 = false) and (health_potion = false)) and ((flask = false) and (forestmap = false))
+           *set empty_inventory true
+        *set money +sales_price_lamp
+        店主收下了提灯。
+        *page_break 接过金币
+        *goto grocerytop
+  *if (forestmap = false)
+     *selectable_if (money >= buy_price_forestmap) #地图。[i](${buy_price_forestmap}G)[/i]
+        *set empty_inventory false
+        *set forestmap true
+        *set money -buy_price_forestmap
+        *if (money < 0)
+            *set money 0
+        店主给了你一张皱巴巴的地图。
+        *page_break 收下地图
+        *goto grocerytop
+  *if (forestmap)
+      #把地图卖给他。 [i]($${sales_price_lamp})[/i]
+         *set lamp false
+         *if ((sword1 = false) and (health_potion = false)) and ((flask = false) and (lamp = false))
+            *set empty_inventory true
+         *set money +sales_price_lamp
+         店主收下了提灯。
+         *page_break 接过金币
+         *goto grocerytop
+  #没什么可看的了。
+      “欢迎再次光临！”店主扬声说。
+      *page_break 离开杂货店
+      *goto town
+*comment ------------杂货店------------------
+*comment ------------------------------------
+
+
+*label forest
+*page_break 森林
+*label foresttop
+森林里静悄悄的。你想怎么走呢？
+*choice
+  #向东。
+  #向南。
+  #向西。
+  #向北。
+  *if (class != "女主角")
+      #整那么多弯弯绕绕的干什么，走就对了！
+        你决定四处瞎走。反正你强力，遇见魔物照脸怼就是了，没什么可怕的。
+        *goto forest
+
+*label forestshop
 *temp buy_price_s 500
 *temp sales_price_s 0
 *temp sales_price_s2 0
 *temp sales_price_hp 0
 *temp buy_price_hp 100
 *temp buy_hp 0
-Hello and welcome to Generic Dan's shop!
+
 *label top
 *set sales_price_s round((buy_price_s /2) +sword1_dura)
 What can I help you with today?
@@ -155,4 +408,15 @@ Money: $${money}
       *goto end
 
 *label end
-You walked out and immidiately got arrested.
+你沿着原路返回，很快回到了出发点。
+*goto beforehearrives
+
+
+*label player_rest
+*page_break 旅店
+*if (time != 4)
+    你决定休息。可能是今天太累了的缘故，你很快就睡着了。
+    *ending
+*else
+    你决定休息。你在床上翻滚了一会儿，美滋滋地睡着了。
+    *ending

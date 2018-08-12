@@ -1,4 +1,4 @@
-*page_break
+*page_break 进入游戏
 你转生成为了恶魔城的守关恶魔，人送外号新人杀手。
 *line_break
 你让菜鸡勇者们闻风丧胆，靠的是……
@@ -39,22 +39,25 @@
         *set skill "负面效果：烧伤、冻伤、中毒、混乱"
         你能让勇者们背着一身乱七八糟的负面效果，焦头烂额。
         *goto weakness
-      *selectable_if (gender = "男性") #给敌方施加魅惑。（男性）
-        *set skill "魅惑"
-        作为一名男恶魔，你拥有种族技能“魅惑”，经常能让勇者们陷入对自己性向的深深质疑不能自拔。
-        *goto weakness
-      *selectable_if (gender = "女性") #给敌方施加魅惑。（女性）
-        *set skill "魅惑"
-        作为一名女恶魔，你拥有种族技能“魅惑”，对付异性恋勇者有如砍瓜切菜。
-        *goto weakness
-      *selectable_if (gender = "双性") #给敌方施加魅惑。（双性）
-        *set skill "魅惑"
-        作为一名扶她恶魔，你拥有种族技能“魅惑”。
-        *line_break
-        多亏了你的女性性征，你对付异性恋勇者有如砍瓜切菜。不仅如此，你胯下的阴茎，经常能让没有防备的勇者的精神受到暴击。
-        *line_break
-        ……说起来，有个别勇者见到你故意露出来吓人的肉棒反而更兴奋是怎么回事。这届勇者是不是不太行啊。
-        *goto weakness
+      *if (gender = "男性")
+          *selectable_if (gender = "男性") #给敌方施加魅惑。（男性）
+            *set skill "魅惑"
+            作为一名男恶魔，你拥有种族技能“魅惑”，经常能让勇者们陷入对自己性向的深深质疑不能自拔。
+            *goto weakness
+      *if (gender = "女性")
+          *selectable_if (gender = "女性") #给敌方施加魅惑。（女性）
+            *set skill "魅惑"
+            作为一名女恶魔，你拥有种族技能“魅惑”，对付异性恋勇者格外轻松。
+            *goto weakness
+      *if (gender = "双性")
+          *selectable_if (gender = "双性") #给敌方施加魅惑。（双性）
+            *set skill "魅惑"
+            作为一名扶她恶魔，你拥有种族技能“魅惑”。
+            *line_break
+            多亏了你的女性性征，你对付异性恋勇者格外轻松。不仅如此，你胯下的阴茎，经常能让没有防备的勇者的精神受到暴击。
+            *line_break
+            ……说起来，有个别勇者见到你故意露出来吓人的肉棒反而更兴奋是怎么回事。这届勇者是不是不太行啊。
+            *goto weakness
 
 *label weakness
 *line_break
@@ -73,3 +76,4 @@
 
 *label count
 *set count true
+*goto_scene ending

@@ -1,6 +1,6 @@
 ﻿[b]关于作者[/b]
 *line_break
-一个恐怖的软泥怪！
+刀背击打，
 *line_break
 萌、雷点都很拧巴，腿肉看心情割。
 
@@ -11,7 +11,7 @@
 *line_break
 按阵营分三条世界线，每条世界线世界观不同人设不同剧情不同，
 *line_break
-唯有一点是相同的：最后都是嫖勇者。
+唯有一点是相同的：反正最后都要嫖人。
 
 
 能让我硬着头皮对着Atom搞这么长时间，性欲确实是第一生产力，不服不行。
@@ -19,10 +19,17 @@
 [b]Credits[/b]
 *line_break
 *line_break
-WritingPrompts
+Inspired by
 *line_break
 Aerd_Gander（
 *link https://redd.it/8saheu r/WritingPrompts
+）
+
+
+Atom package
+*line_break
+Kingsleyh（
+*link https://atom.io/packages/language-choicescript language-choicescript
 ）
 
 
@@ -44,7 +51,7 @@ Malebranche（
 ,
 *link https://forum.choiceofgames.com/t/cs-auto-advance-and-timed-choice-mod-v-2-2-is-up-new-update/15983 autoAdvance.js
 ）
-*line_break 
+*line_break
 Spectrum （
 *link https://forum.choiceofgames.com/t/unofficial-choicescript-audio-enhanced-plugin/37923 sePlugin.js
 ）
@@ -56,8 +63,16 @@ MutonElite（
 *link https://forum.choiceofgames.com/t/tutorial-basic-inventory-shop-system/2629/1 Tutorial : Basic Inventory & Shop System
 ）
 *line_break
-一位好心GN发在的范例（
-*link https://idelem.github.io/sexpert-guide/mygame/index.html
+一位好心GN发在xqw的范例（
+*link https://idelem.github.io/sexpert-guide/mygame/index.html 银河系老司机指南
+）
+*line_break
+另一位好心GN发在xqw的范例（
+*link http://choicescript.weebly.com/ 秦王府修仙之路
+）
+*line_break
+艾前端（
+*link https://www.cnblogs.com/xinjie-just/p/5911086.html 自定义input[type="radio"]的样式
 ）
 *line_break
 DashingDon（
@@ -72,25 +87,24 @@ W3eschools（
 *link https://www.w3schools.com/css/css3_buttons.asp CSS Buttons
 ）
 *line_break
-WebGardients（
-*link https://webgradients.com/
+Itmeo（
+*link https://webgradients.com/ WebGardients
 ）
 *line_break
 Abnerlee（
 *link https://github.com/typora/typora-theme-gallery/blob/gh-pages/media/theme/han/han.css han.css
 ）
-*line_break
-Kingsleyh（
-*link https://atom.io/packages/language-choicescript language-choicescript
-） 
 
 
-[b]沾着软泥的传送门[/b]
-*line_break
-① 邪恶软泥怪的发霉腿肉：
-*link https://falseswipe.github.io/ 回收站
-。
-*line_break
-② 邪恶软泥怪的新鲜腿肉：
-*link http://www.jjwxc.net/oneauthor.php?authorid=1933377 Word：从入门到放弃
-。
+
+
+*comment
+*comment [b]沾着软泥的传送门[/b]
+*comment *line_break
+*comment ① 邪恶软泥怪的发霉腿肉：
+*comment *link https://falseswipe.github.io/ 回收站
+*comment 。
+*comment *line_break
+*comment ② 邪恶软泥怪的新鲜腿肉：
+*comment *link http://www.jjwxc.net/oneauthor.php?authorid=1933377 Word：从入门到放弃
+*comment 。

@@ -262,7 +262,7 @@ Scene.prototype.loadSceneFast = function loadSceneFast(url) {
         } else if (xhr.responseText === "") {
           throw new Error("Couldn't load " + url + "\nThe file is probably missing or empty.");
         }
-        
+
         if (!window.cachedResults) window.cachedResults = {};
         cachedResults[self.name] = result;
         self.loadLinesFast(result.crc, result.lines, result.labels);
@@ -720,14 +720,14 @@ Scene.prototype.save = function save(slot) {
         }
         tempStatWrites = {};
       }
-      
+
       saveCookie(function() {}, slot, this.stats, this.temps, this.lineNum, this.indent, this.debugMode, this.nav);
     }
 };
 
 // *goto labelName
 // Go to the line labeled with the label command *label labelName
-// 
+//
 // goto by reference
 //   *create foo "labelName"
 //   *goto {foo}
@@ -784,7 +784,7 @@ Scene.prototype["return"] = function scene_return() {
     } else {
       throw new Error(this.lineMsg() + "invalid return; we've already returned from the last gosub");
     }
-    
+
 };
 
 // *gotoref expression
@@ -1069,7 +1069,7 @@ Scene.prototype.purchase = function purchase_button(data) {
           }
         );
       }
-      
+
       self.skipFooter = false;
       self.finished = false;
       self.execute();
@@ -2045,10 +2045,10 @@ Scene.prototype.ending = function ending() {
     this.paragraph();
     var groups = [""];
     options = [];
-    options.push({name:"Play again.", group:"choice", restart:true});
-    options.push({name:"Play more games like this.", group:"choice", moreGames:true});
-    options.push({name:"Share this game with friends.", group:"choice", share:true});
-    options.push({name:"Email me when new games are available.", group:"choice", subscribe:true});
+    options.push({name:"再玩一遍。", group:"choice", restart:true});
+    //options.push({name:"Play more games like this.", group:"choice", moreGames:true});
+    //options.push({name:"Share this game with friends.", group:"choice", share:true});
+    //options.push({name:"Email me when new games are available.", group:"choice", subscribe:true});
 
     var self = this;
     function endingMenu() {
@@ -2083,7 +2083,7 @@ Scene.prototype.restart = function restart() {
   var startupScene = self.nav.getStartupScene();
   var scene = new Scene(startupScene, self.stats, self.nav, {debugMode:self.debugMode, secondaryMode:false});
   scene.resetPage();
-  
+
 };
 
 Scene.prototype.subscribe = function scene_subscribe(now) {
@@ -2485,7 +2485,7 @@ Scene.prototype.save_game = function save_game(destinationSceneName) {
           message.appendChild(messageText);
           return;
         }
-        
+
         recordEmail(email, function() {
           clearScreen(function() {
             saveCookie(function() {
@@ -3071,7 +3071,7 @@ Scene.prototype.delay_ending = function(data) {
         options.push(playMoreGames);
         var emailMe = {name: "Email me when new games are available."};
         options.push(emailMe);
-        
+
         self.paragraph();
         printOptions([""], options, function(option) {
           if (option == playMoreGames) {
@@ -3694,7 +3694,7 @@ Scene.prototype.achievement = function scene_achievement(data) {
   var achievementName = parsed[1];
   if (!/^[a-z][a-z0-9_]+$/.test(achievementName)) throw new Error(this.lineMsg()+"Invalid achievement name: " +achievementName);
 
-  
+
   if (this.nav.achievements.hasOwnProperty(achievementName)) {
     // this achievement already exists...
     if (!this.nav.achievements[achievementName].lineNumber) {

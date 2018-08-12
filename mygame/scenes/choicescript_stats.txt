@@ -1,10 +1,9 @@
 *temp inventory ""
 *temp comma false
-*stat_chart
-    text name 姓名
-    text gender 性别
 *if (alignment = "混乱")
     *stat_chart
+        text name 姓名
+        text gender 性别
         text alignment 阵营
     *line_break
     *if (count)
@@ -18,52 +17,77 @@
             text skill 能力
         *finish
     *else
-        先创建完角色再来看属性啦！
+        先完善人设再来看属性啦！
     *finish
 *elseif (alignment = "中立")
     *stat_chart
+        text name 姓名
+        text gender 性别
         text alignment 阵营
     *line_break
     *stat_chart
         text class 职业
     *finish
 *elseif (alignment = "守序")
+    [b]你[/b]
     *stat_chart
+        text name 姓名
+        text gender 性别
         text alignment 阵营
     *line_break
-    [b]你[/b]
     *stat_chart
         text class 职业
     *if (empty_inventory)
-      *set comma true
-      *set inventory &"什么也没有。"
+      *set comma false
+      *set inventory &"什么也没有"
     *if (sword1)
+      *if comma
+          *set inventory &"、"
       *set comma true
       *set inventory &"$!{sword1_name} （$!{sword1_description}耐久度${sword1_dura}。）"
-    *if (cape)
+    *if (flask)
        *if comma
-          *set inventory &"，"
+          *set inventory &"、"
        *set comma true
-       *set inventory &"A $!{color} $!{material} Cape"
+       *set inventory &"烧瓶"
+    *if (lamp)
+       *if comma
+          *set inventory &"、"
+       *set comma true
+       *set inventory &"提灯"
+    *if (forestmap)
+       *if comma
+          *set inventory &"、"
+       *set comma true
+       *set inventory &"地图"
     *if (health_potion)
        *if comma
-          *set inventory &"，"
+          *set inventory &"、"
        *set comma true
-       *set inventory &"Health Potion(s) (x${hp_number})"
+       *set inventory &"伤药 (x${hp_number})"
+    *set inventory &"。"
     *stat_chart
-        text inventory 装备
+        text inventory 持有物品
         text money 金币
     *line_break
 
 
-
-    [b]勇者[/b]
-    *stat_chart
-        opposed_pair Blood
-            人类
-            黑龙
-        percent Insanity 精神不安定
+    *if (yuusha_met)
+        [b]勇者[/b]
+        *stat_chart
+            opposed_pair Blood
+                人类
+                黑龙
+            percent Sanity 理智
     *finish
+    *else
+        还没有遇见勇者。
+        *finish
 *else
+    *stat_chart
+        text name 姓名
+        text gender 性别
+    *line_break
     你还没有选择阵营。
     *finish
+*finish

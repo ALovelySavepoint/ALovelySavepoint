@@ -2191,7 +2191,7 @@ function printInput(target, inputType, callback, minimum, maximum, step) {
     }
 
     input.name="text";
-    input.setAttribute("style", "font-size: 25px; width: 658px; border: 2px solid #626160 !important; border-radius: 2px;",);
+    input.setAttribute("style", "font-size: 25px; display: block; border: 2px solid #626160 !important; border-radius: 2px;",);
     form.appendChild(input);
 
     form.onsubmit = function(e) {
@@ -2235,7 +2235,7 @@ function promptEmailAddress(target, defaultEmail, allowContinue, callback) {
   try { input.type="email"; } catch (e) {}
   input.name="email";
   input.value=defaultEmail;
-  input.setAttribute("style", "font-size: 25px; width: 658px; border: 2px solid #626160 !important; border-radius: 2px;");
+  input.setAttribute("style", "font-size: 25px; display: block; border: 2px solid #626160 !important; border-radius: 2px;");
   form.appendChild(input);
   target.appendChild(form);
   println("", form);
