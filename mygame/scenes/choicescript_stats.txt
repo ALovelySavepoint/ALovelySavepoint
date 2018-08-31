@@ -1,5 +1,8 @@
 *temp inventory ""
 *temp comma false
+*temp money_G
+*set money_G money
+*set money_G &"G"
 *if (alignment = "混乱")
     *stat_chart
         text name 姓名
@@ -29,59 +32,113 @@
         text class 职业
     *finish
 *elseif (alignment = "守序")
-    [b]你[/b]
-    *stat_chart
-        text name 姓名
-        text gender 性别
-        text alignment 阵营
-    *line_break
-    *stat_chart
-        text class 职业
-    *if (empty_inventory)
-      *set comma false
-      *set inventory &"什么也没有"
-    *if (sword1)
-      *if comma
-          *set inventory &"、"
-      *set comma true
-      *set inventory &"$!{sword1_name} （$!{sword1_description}耐久度${sword1_dura}。）"
-    *if (flask)
-       *if comma
-          *set inventory &"、"
-       *set comma true
-       *set inventory &"烧瓶"
-    *if (lamp)
-       *if comma
-          *set inventory &"、"
-       *set comma true
-       *set inventory &"提灯"
-    *if (forestmap)
-       *if comma
-          *set inventory &"、"
-       *set comma true
-       *set inventory &"地图"
-    *if (health_potion)
-       *if comma
-          *set inventory &"、"
-       *set comma true
-       *set inventory &"伤药 (x${hp_number})"
-    *set inventory &"。"
-    *stat_chart
-        text inventory 持有物品
-        text money 金币
-    *line_break
-
-
-    *if (yuusha_met)
+    *if ((count) and (yuusha_met))
+        [b]你[/b]
+        *stat_chart
+            text name 姓名
+            text gender 性别
+            text alignment 阵营
+        *line_break
+        *stat_chart
+            text class 职业
+        *if (empty_inventory)
+          *set comma false
+          *set inventory &"什么也没有"
+        *if (sword0)
+          *if comma
+              *set inventory &"、"
+          *set comma true
+          *set inventory &"$!{sword0_name} （耐久度${sword1_dura}。）"
+        *if (sword1)
+          *if comma
+              *set inventory &"、"
+          *set comma true
+          *set inventory &"$!{sword1_name} （$!{sword1_description}耐久度${sword1_dura}。）"
+        *if (flask)
+           *if comma
+              *set inventory &"、"
+           *set comma true
+           *set inventory &"烧瓶"
+        *if (lamp)
+           *if comma
+              *set inventory &"、"
+           *set comma true
+           *set inventory &"提灯"
+        *if (forestmap)
+           *if comma
+              *set inventory &"、"
+           *set comma true
+           *set inventory &"地图"
+        *if (health_potion)
+           *if comma
+              *set inventory &"、"
+           *set comma true
+           *set inventory &"伤药 (x${hp_number})"
+        *set inventory &"。"
+        *stat_chart
+            text inventory 持有物品
+            text money_G 金币
+        *line_break
+        *line_break
         [b]勇者[/b]
         *stat_chart
             opposed_pair Blood
                 人类
                 黑龙
             percent Sanity 理智
-    *finish
-    *else
-        还没有遇见勇者。
+        *finish
+    *if ((count) and (yuusha_met = false))
+        [b]你[/b]
+        *stat_chart
+            text name 姓名
+            text gender 性别
+            text alignment 阵营
+        *line_break
+        *stat_chart
+            text class 职业
+        *if (empty_inventory)
+          *set comma false
+          *set inventory &"什么也没有。"
+        *if (sword0)
+          *if comma
+              *set inventory &"、"
+          *set comma true
+          *set inventory &"$!{sword0_name} （耐久度：${sword0_dura}。）"
+        *if (sword1)
+          *if comma
+              *set inventory &"、"
+          *set comma true
+          *set inventory &"$!{sword1_name} （$!{sword1_description}耐久度：${sword1_dura}。）"
+        *if (flask)
+           *if comma
+              *set inventory &"、"
+           *set comma true
+           *set inventory &"烧瓶"
+        *if (lamp)
+           *if comma
+              *set inventory &"、"
+           *set comma true
+           *set inventory &"提灯"
+        *if (forestmap)
+           *if comma
+              *set inventory &"、"
+           *set comma true
+           *set inventory &"地图"
+        *if (health_potion)
+           *if comma
+              *set inventory &"、"
+           *set comma true
+           *set inventory &"伤药（x${hp_number}）"
+        *stat_chart
+            text inventory 持有物品
+            text money_G 金币
+        *finish
+    *if (count = false)
+        [b]你[/b]
+        *stat_chart
+            text name 姓名
+            text gender 性别
+            text alignment 阵营
         *finish
 *else
     *stat_chart

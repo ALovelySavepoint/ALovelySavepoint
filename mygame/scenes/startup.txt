@@ -44,11 +44,14 @@
 *comment
 *comment-------------Inventory-------------
 *create money 750
-*create empty_inventory true
+*create empty_inventory false
 *create sword1 false
 *create sword1_name ""
 *create sword1_description ""
 *create sword1_dura 100
+*create sword0 true
+*create sword0_name ""
+*create sword0_dura 100
 *create cape false
 *create color ""
 *create material ""
@@ -57,6 +60,7 @@
 *create flask false
 *create lamp false
 *create forestmap false
+*create forest_discount 1
 *comment -------------Inventory-------------
 *comment
 *comment
@@ -86,7 +90,7 @@
 
 *sm_init 存档点 | 6
 
-这是一个使用 ChoiceScript 编写的恋爱文字冒险游戏，
+这是一个使用 ChoiceScript 编写的文字冒险恋爱游戏，
 *line_break
 是一部放飞自我、解放性癖之作，所以不要对它的可玩度和剧情深度有任何指望。
 *line_break
