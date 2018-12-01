@@ -2,7 +2,7 @@
 *temp comma false
 *temp money_G
 *set money_G money
-*set money_G &"G"
+*set money_G &" G"
 *if (alignment = "混乱")
     *stat_chart
         text name 姓名
@@ -11,6 +11,7 @@
     *line_break
     *if (count)
         *stat_chart
+            text hp 生命值
             text strength 攻击
             text defense 防御
             text intelligence 魔攻
@@ -48,12 +49,12 @@
           *if comma
               *set inventory &"、"
           *set comma true
-          *set inventory &"$!{sword0_name} （耐久度${sword1_dura}。）"
+          *set inventory &"$!{sword0_name} （耐久度：${sword1_dura}）"
         *if (sword1)
           *if comma
               *set inventory &"、"
           *set comma true
-          *set inventory &"$!{sword1_name} （$!{sword1_description}耐久度${sword1_dura}。）"
+          *set inventory &"$!{sword1_name} （$!{sword1_description}耐久度：${sword1_dura}）"
         *if (flask)
            *if comma
               *set inventory &"、"
@@ -74,6 +75,11 @@
               *set inventory &"、"
            *set comma true
            *set inventory &"伤药 (x${hp_number})"
+        *if (madder_horn)
+           *if comma
+              *set inventory &"、"
+           *set comma true
+           *set inventory &"恶魔角"
         *set inventory &"。"
         *stat_chart
             text inventory 持有物品
@@ -103,12 +109,12 @@
           *if comma
               *set inventory &"、"
           *set comma true
-          *set inventory &"$!{sword0_name} （耐久度：${sword0_dura}。）"
+          *set inventory &"$!{sword0_name} （耐久度：${sword0_dura}）"
         *if (sword1)
           *if comma
               *set inventory &"、"
           *set comma true
-          *set inventory &"$!{sword1_name} （$!{sword1_description}耐久度：${sword1_dura}。）"
+          *set inventory &"$!{sword1_name} （$!{sword1_description}耐久度：${sword1_dura}）"
         *if (flask)
            *if comma
               *set inventory &"、"

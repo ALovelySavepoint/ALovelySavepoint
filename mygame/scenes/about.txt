@@ -1,6 +1,6 @@
 ﻿[b]关于作者[/b]
 *line_break
-刀刀，
+鹊山，
 *line_break
 萌、雷点都很拧巴，腿肉看心情割。
 
@@ -14,7 +14,8 @@
 唯有一点是相同的：反正最后都要谈恋爱！
 
 
-能让我硬着头皮对着Atom搞这么长时间，性欲确实是第一生产力，不服不行。
+能让我硬着头皮对着 Atom 搞这么长时间，性欲确实是第一生产力，不服不行。
+
 
 [b]Credits[/b]
 *line_break
@@ -23,6 +24,9 @@ Inspired by
 *line_break
 Aerd_Gander（
 *link https://redd.it/8saheu r/WritingPrompts
+）
+Fenoxo（
+*link https://www.fenoxo.com/play-games/ Corruption of Champions
 ）
 
 
@@ -63,11 +67,11 @@ MutonElite（
 *link https://forum.choiceofgames.com/t/tutorial-basic-inventory-shop-system/2629/1 Tutorial : Basic Inventory & Shop System
 ）
 *line_break
-一位好心GN发在xqw的范例（
+一位好心 GN 发在 xqw 的范例（
 *link https://idelem.github.io/sexpert-guide/mygame/index.html 银河系老司机指南
 ）
 *line_break
-另一位好心GN发在xqw的范例（
+另一位好心 GN 发在 xqw 的范例（
 *link http://choicescript.weebly.com/ 秦王府修仙之路
 ）
 *line_break

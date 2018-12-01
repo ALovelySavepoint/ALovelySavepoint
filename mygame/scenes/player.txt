@@ -1,11 +1,11 @@
 ﻿*page_break 进入游戏
-你生前没少打RPG游戏，死后转生到一个魔王勇者世界观的RPG游戏世界，其实还挺高兴，生活得也挺不错的。
+你生前没少打 RPG 游戏，死后转生到一个魔王勇者世界观的 RPG 游戏世界，其实还挺高兴，生活得也挺不错的。
 只不过，前段时间，魔王又复活了。好在受到神的指引的勇者已经踏上了讨伐魔王的征程。按照一般剧情发展，正义的勇者一方肯定能赢，不久世界就会恢复平静了。你倒不是担心这个。
 *line_break
 你担心的问题是：虽然还没见到勇者，但你怀疑自己可能是勇者小队的一份子。原因是你目前所在的城镇是勇者的必经之路，而且……
 *choice
   #你是个强力的法师。
-    你是个大法师。从古至今，哪个RPG游戏里没有法师的身影！
+    你是个大法师。从古至今，哪个 RPG 游戏里没有法师的身影！
     *set class "法师"
     *set sword0_name "木杖"
     *set sword1_name "枯藤法杖"
@@ -41,7 +41,7 @@
     *set sword1_dura 200
     *goto pevent1
   #你是个强力的狂战士。
-    你物理攻击力超强，秒天秒地秒空气！虽然……作为队伍成员有点非主流，但是高伤害非常实用嘛！
+    你物理攻击力超强，秒天秒地秒空气！虽然作为队伍成员有点非主流，但是高伤害非常实用嘛！
     *set class "狂战士"
     *set sword0_name "重剑"
     *set sword1_name "光焰"
@@ -58,7 +58,7 @@
     *if (gender = "男性")
         ……虽然说你是个男的吧。不过谁也没有规定男性生物就不能站女主位嘛。
     *if (gender = "双性")
-        不过，会让你站女主位的游戏，恐怕也不是什么正经RPG……
+        不过，会让你站女主位的游戏，恐怕也不是什么正经 RPG……
     *goto pevent1
 
 *label pevent1
@@ -145,6 +145,9 @@
   #礼品店。
     暂时没开放！
     *ending
+  #许愿池。
+    暂时没开放！
+    *ending
   #没什么特别想去的地方，还是离开吧。
     你没找到什么感兴趣的地方。
     *page_break 离开
@@ -166,14 +169,14 @@
   这个服务态度很完蛋啊。你心想。
 
 
-  你当前拥有${money}G。
+  你当前拥有 ${money} G。
   *set potionshopfirsttime false
   *goto potionchoice
 *else
   药剂店老板继续和他的药水做抗争：“还有吗？”
 
 
-  你当前拥有${money}G。
+  你当前拥有 ${money} G。
   *goto potionchoice
 
 *label potionchoice
@@ -185,7 +188,7 @@
       *page_break 放弃
       *goto potiontop
    *if (flask = false)
-      *selectable_if (money >= buy_price_flask) #买炼金用的烧瓶。 [i](${buy_price_flask}G)[/i]
+      *selectable_if (money >= buy_price_flask) #买炼金用的烧瓶。 [i]（$${buy_price_flask} G）[/i]
          *set empty_inventory false
          *set flask true
          *set money -buy_price_flask
@@ -195,7 +198,7 @@
          *page_break 收下烧瓶
          *goto potiontop
    *if (flask)
-       #把烧瓶卖给他。 [i]($${sales_price_flask})[/i]
+       #把烧瓶卖给他。 [i]（$${sales_price_flask} G）[/i]
           *set flask false
           *if ((sword1 = false) and (health_potion = false)) and ((lamp = false) and (forestmap = false))
              *set empty_inventory true
@@ -203,11 +206,11 @@
           “行吧。”店主把烧瓶收了回去。
           *page_break 接过金币
           *goto potiontop
-   #买伤药。 [i](${buy_price_hp}G x1)[/i]
+   #买伤药。 [i]（$${buy_price_hp} G x1）[/i]
       店主扬了扬下巴：“都在那儿。要多少看着拿吧。”
       *input_number buy_hp 0 99
       *set sales_price_hp (buy_price_hp * buy_hp)
-      “一共${buy_hp}瓶是吧？${sales_price_hp}G。”
+      “一共 ${buy_hp} 瓶是吧？${sales_price_hp} G。”
       *choice
          *selectable_if (money >= sales_price_hp) #“成交。”
             *set money -sales_price_hp
@@ -221,11 +224,15 @@
             *goto potiontop
         *if (money < sales_price_hp)
             #“我钱不够。”
+              “我钱不够。”
+              *line_break
               店主“哦”了一声：“那算了。”
               *page_break 再看看别的
               *goto potiontop
         *else
             #“算了，不想买了。”
+              “算了，不想买了。”
+              *line_break
               店主“哦”了一声：“那算了。”
               *page_break 再看看别的
               *goto potiontop
@@ -252,20 +259,20 @@
   你一走进门，老板就热情洋溢地欢迎你：“想买点什么，尽管开口！”
 
 
-  你当前拥有${money}G。
+  你当前拥有 ${money} G。
   *set groceryfirsttime false
   *goto grocerychoice
 *else
   “还有什么想要的吗？”
 
 
-  你当前拥有${money}G。
+  你当前拥有 ${money} G。
   *goto grocerychoice
 
 *label grocerychoice
 *choice
   *if (lamp = false)
-    *selectable_if (money >= buy_price_lamp) #买提灯。 [i](${buy_price_lamp}G)[/i]
+    *selectable_if (money >= buy_price_lamp) #买提灯。 [i]（$${buy_price_lamp} G）[/i]
         *set empty_inventory false
         *set lamp true
         *set money -buy_price_lamp
@@ -275,7 +282,7 @@
         *page_break 收下提灯和灯油
         *goto grocerytop
   *if (lamp)
-     #把提灯卖给他。 [i]($${sales_price_lamp})[/i]
+     #把提灯卖给他。 [i]（$${sales_price_lamp} G）[/i]
         *set lamp false
         *if ((sword1 = false) and (health_potion = false)) and ((flask = false) and (forestmap = false))
            *set empty_inventory true
@@ -284,7 +291,7 @@
         *page_break 接过金币
         *goto grocerytop
   *if (forestmap = false)
-     *selectable_if (money >= buy_price_forestmap) #买地图。 [i](${buy_price_forestmap}G)[/i]
+     *selectable_if (money >= buy_price_forestmap) #买地图。 [i]（$${buy_price_forestmap} G）[/i]
         *set empty_inventory false
         *set forestmap true
         *set money -buy_price_forestmap
@@ -294,7 +301,7 @@
         *page_break 收下地图
         *goto grocerytop
   *if (forestmap)
-      #把地图卖给他。 [i]($${sales_price_lamp})[/i]
+      #把地图卖给他。 [i]（$${sales_price_lamp} G）[/i]
          *set lamp false
          *if ((sword1 = false) and (health_potion = false)) and ((flask = false) and (lamp = false))
             *set empty_inventory true
@@ -343,7 +350,7 @@
         *rand y 0 3
         *page_break 四处瞎走
         *goto forestroute
-  *if (x = 0 and y = 0)
+  *if ((x = 0) and (y = 0))
       #还是趁早离开吧。
         你已经在森林里待够了。
         *page_break 离开
@@ -352,7 +359,8 @@
 *label forest_x_y_count
 *if (((x = 1 and y = 0) or (x = -1 and y = 0)) or ((x = 0 and y = 1) or (x = 0 and y = -1)))
     *goto mamono_border
-
+*comment *if (((x = 1 and y = 0) or (x = -1 and y = 0)) or ((x = 0 and y = 1) or (x = 0 and y = -1)))
+*comment     *goto mamono_fight
 
 *label mamono_border
 你在不远处听到了声音。现在离开或许还来得及。
@@ -364,6 +372,8 @@
 *temp buy_price_s 1000
 *temp real_buy_price_s 0
 *temp sales_price_hp 0
+*temp buy_price_horn 200
+*temp real_buy_price_horn 0
 *temp buy_price_hp 100
 *temp buy_hp 0
 *temp firsttalkwithmadder false
@@ -378,19 +388,22 @@
   见你不说话，恶魔身体往前探了一点，笑吟吟地问：“您的武器看起来挺旧的了，有兴趣买一把新的吗？”
 
 
-  你当前拥有${money}G。
+  你当前拥有 ${money} G。
   *set forestshopfirsttime false
   *goto forestshopchoice
 *else
   恶魔用尾巴打着节奏，等待着你的下一个决定。
 
 
-  你当前拥有${money}G。
+  你当前拥有 ${money} G。
   *goto forestshopchoice
 *label forestshopchoice
 *set real_buy_price_s buy_price_s*forest_discount
+*set real_buy_price_horn buy_price_horn*forest_discount
 *choice
    *hide_reuse #为什么高阶恶魔会跑到这里来卖武器啊？
+      为什么高阶恶魔会跑到这里来卖武器啊？
+      *line_break
       无论从什么角度都说不通。你实在想不明白，这种高阶恶魔有什么理由会跑到森林最深处卖武器。
       *line_break
       “当然是为了挣钱啊。”茜色的恶魔似乎是听见你的心声，如此回应道。
@@ -401,6 +414,7 @@
           #“你、你能知道我在想什么？”
             *set firsttalkwithmadder true
             “你、你能知道我在想什么？”
+            *line_break
             “是啊。毕竟我是恶魔嘛。”她说。
             *page_break 结束对话
             *goto foresttop
@@ -411,8 +425,10 @@
             “这就没意思啦。”恶魔撇了撇嘴，放过了你。
             *page_break 结束对话
             *goto foresttop
-   *if (firsttalkwithmadder)
+   *if ((sword1 = false) (firsttalkwithmadder))
       *hide_reuse #好、好想摸摸尾巴……
+         好、好想摸摸尾巴……
+         *line_break
          你眼也不错地盯着恶魔摆动的小尾巴看。真的好想摸啊……
          *line_break
          “嗯？想摸吗？让你摸摸也可以啦。”茜色恶魔无所谓似的说，把尾巴向你手边伸了伸。
@@ -420,18 +436,22 @@
          虽然她的语气听着好像不太在乎，但你总觉得还是不要摸比较好……真的要摸吗？
          *choice
            #不了不了，还是性命比较重要。
+             不了不了，还是性命比较重要。
+             *line_break
              你依依不舍地看了一眼她的尾巴：“还是算了……”
+             *line_break
              恶魔撇了撇嘴。
              *page_break 结束对话
              *goto foresttop
            #不行了，实在忍不住了！即使死也要摸！
              *set forest_discount +0.2
+             不行了，实在忍不住了！即使死也要摸！
+             *line_break
              你如愿摸到了她的尾巴。手感真是好得无法形容。你感觉自己体会到了极乐……
              *line_break
              恶魔任由你摸尾巴，偶尔觉得姿势不太舒服，才轻轻地动几下。奇怪的是，她好像心情很好，尾巴尖还轻轻晃着。你忘我地摸了半天，回过神来时才发现，她放在商品前的标价已经悄悄变了。
              *page_break 含泪结束对话
              *goto foresttop
-   *if ((sword1 = false) and (firsttalkwithmadder))
       *hide_reuse #如、如果有好武器的话，和恶魔做交易好像也不是不可以……
          *set shakenbythetempt true
          战斗的时候，趁手的武器太重要了。只要能得到一把好武器，抛弃原则、和恶魔做交易似乎也并不是那么难以接受……
@@ -442,23 +462,29 @@
    *if (((sword1 = false) and (firsttalkwithmadder)) and (shakenbythetempt))
       *hide_reuse #“……能把你买的武器给我看看吗？”
          你最终还是没能禁得住诱惑，颤声问：“……能把你买的武器给我看看吗？”
+         *line_break
+         她高高兴兴地答应了：“这把武器叫$!{sword1_name}。买下来对你的实力提升会很大。武力值能翻个倍也说不定哦？”
+         她……说的不是假话。你是个$!{class}，太清楚怎么鉴别这种东西的品质了。这说是传世神兵也不为过。
          *page_break
          *goto foresttop
    *if (((sword1 = false) and (firsttalkwithmadder)) and (shakenbythetempt))
-      *selectable_if (money >= real_buy_price_s) #就算是和恶魔交易你也认了，买！[i]（${real_buy_price_s}G）[/i]
+      *selectable_if (money >= real_buy_price_s) #就算是和恶魔交易你也认了，买！[i]（$${real_buy_price_s} G）[/i]
          *set empty_inventory false
          *set sword1 true
-         *set money -buy_price_s
+         *set money -real_buy_price_s
          *if (money < 0)
             *set money 0
-         Thank you kindly, here's your new Chainsaw-sword 5000!
-         *page_break
+         她把$!{sword1_name}交给了你。
+         以防万一，你拿在手里又仔细地看了看。虽然是恶魔卖的东西，但是应该没什么问题。
+         *page_break 装备新武器
          *goto foresttop
    *if (sword1)
       *hide_reuse #“可以把$!{sword1_name}退掉吗？”
       一不小心就冲动消费了。消费主义真是要不得。
       *line_break
       $!{sword1_name}固然很好，但是你想想觉得这个价格还是太贵了。你恐怕根本用不着这么好的武器。
+      *line_break
+      你问：“可以把$!{sword1_name}退掉吗？”
       *line_break
       “对不起，武器一经售出，概不退换哦。”恶魔兴高采烈地说。
       *choice
@@ -470,7 +496,7 @@
           *line_break
           确切地说，她的第三只眼睛从本来平整完好的淡红色皮肤中迅速张开，活动了几下，而后正对向你。那只眼睛竖在恶魔光洁的额间，本该属于眼白的地方一片漆黑。
           *line_break
-          你恍惚地回视它虹膜中的金色纹路，无端地感到敬畏，只觉得好像正在注视充能中镭射炮的炮口，或是一场神迹的诞生。
+          你恍惚地回视它虹膜中的金色纹路，无端地感到敬畏，只觉得好像正在注视充能中镭射炮的炮口，或是一场鲜活神迹的诞生。
           *line_break
           *line_break
           恶魔没什么语气地问：“我说过不会退换了吧？”
@@ -482,54 +508,31 @@
           *goto foresttop
    *if (sword1)
       *hide_reuse #“那是……什么？”
-      你买了武器之后就注意到，恶魔从柜子下面掏了半只角出来。
-      “会员卡哦。”恶魔解释道。
-
-   #I'd like to buy some Health Potions. [i]($${buy_price_hp} x1)[/i]
-      How many would you like?
-      *input_number buy_hp 0 99
-      *set sales_price_hp (100 * buy_hp)
-      So you would like to buy ${buy_hp} Health Potions? That'll be $${sales_price_hp} then.
+      “那是……什么？”你买了武器之后就注意到，恶魔从柜子下面掏了只恶魔角出来。
+      “虽然看起来很奇怪，不过它实际上是会员卡，”恶魔解释道，“只要 ${real_buy_price_horn} G，从此以后你在我这里买东西都是八折哦！怎么样，要考虑一下吗？”
+      *label vip_card_choice
       *choice
-         *selectable_if (money >= sales_price_hp) #Yep. Here you go.
-            *set money -sales_price_hp
-            *if (money < 0)
-               *set money 0
-            *set empty_inventory false
-            *set health_potion true
-            *set hp_number buy_hp
-            A pleasure doing business with you!
-            *page_break
-            *goto foresttop
-         #I can't afford that.
-            That's too bad, see anything else you like?
-            *page_break
-            *goto foresttop
-   *hide_reuse *if (cape = false) #Are those Bat-Boy capes?
-      Yep, promotional item. We're giving them out free for the kids. Why, you want one? What color would you like?
-      *fake_choice
-         #Black
-            *label always_black
-            *set color "black"
-         #Black...
-            *set color "black"
-         #Black!
-            *goto always_black
-         #Pink!
-            *set color "pink"
-      *set material "polyester"
-      *set cape true
-      *set empty_inventory false
-      Here ya go...
-      *page_break
-      *goto foresttop
-   *if (hp_number > 0) #(Drink a Health Potion)
-      *set hp_number -1
-      *if (hp_number = 0)
-         *set health_potion false
-      You chug down a cool refreshing health potion.
-      *page_break
-      *goto foresttop
+        *hide_reuse #这种事为什么不在卖我武器之前说啊！
+          她理直气壮地说：“那怎么行，别的也就算了，武器可是我收入的大头，打八折太亏了！”
+          *line_break
+          ……真不愧是恶魔啊。
+          *goto vip_card_choice
+        *selectable_if (money >= real_buy_price_horn) #考虑一下好像还挺实惠的，买了吧。[i]（$${real_buy_price_horn} G）
+          *set empty_inventory false
+          *set madder_horn true
+          *set money -real_buy_price_horn
+          *set forest_discount forest_discount*0.8
+          *if (money < 0)
+              *set money 0
+          不知道以后这个恶魔还打算卖什么……总之八折还是挺实惠的，你决定买下它。
+          *line_break
+          茜色恶魔高高兴兴地把断角给你：“对了，这是我自己的断角，里面还带着一点深渊气息，所以你要小心一点，不要被腐蚀了哦？”
+          *page_break 小心接过
+          *goto foresttop
+        #坚决不买，实在太贵了！
+          这个价格太贵了。而且你武器都到手了，恐怕以后也没有再与她交易的必要了。
+          *page_break 拒绝
+          *goto foresttop
    #还是走吧。
       你不想再逗留，很快沿着原路返回了。
       *page_break 返回
@@ -539,7 +542,7 @@
 *page_break 旅店
 *if (time != 4)
     可能是今天太累了的缘故，回到旅店之后，你很快就睡着了。
-    *ending
+    *goto_scene player_1
 *else
     回到旅店之后，你在床上翻滚了一会儿，美滋滋地睡着了。
-    *ending
+    *goto_scene player_1

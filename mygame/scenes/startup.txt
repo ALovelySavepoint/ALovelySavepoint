@@ -18,13 +18,13 @@
 *comment -------------守序属性-------------
 *create class "暂缺"
 *create Sanity 100
-*create Blood 100
+*create Blood 70
 *create yuusha_met false
 *comment -------------守序属性-------------
 *comment
 *comment
 *comment -------------混乱属性-------------
-*create hp 150
+*create hp 300
 *create strength 50
 *create defense 50
 *create intelligence 50
@@ -60,6 +60,7 @@
 *create flask false
 *create lamp false
 *create forestmap false
+*create madder_horn false
 *create forest_discount 1
 *comment -------------Inventory-------------
 *comment
@@ -80,7 +81,7 @@
 *achievement neutral visible 5 NPC
   在阵营选择中选择“中立”阵营即可获得。
   选择“中立”阵营。
-*achievement chaotic visible 5 敌对NPC
+*achievement chaotic visible 5 敌对 NPC
   在阵营选择中选择“混乱”阵营即可获得。
   选择“混乱”阵营。
 *achievement futanari hidden 10 当然要扶她啦！
@@ -96,14 +97,15 @@
 *line_break
 如果需要[b]调整游戏界面[/b]（字体大小、背景颜色、翻页效果），请单击上面的“属性”按钮更改。
 *line_break
-另外，Slot 0是系统自动存档，所以在游玩过程中建议使用Slot 1-5保存进度。
+另外，Slot 0 是系统自动存档，所以在游玩过程中建议使用 Slot 1-5 保存进度。
 *line_break
 
 
 那么，准备好开嫖了吗！
 
 *page_break 准备好啦！
-死后，你转生到了一个勇者魔王世界观的RPG游戏里。
+死后，你转生到了一个勇者魔王世界观的 RPG 游戏里。
+*line_break
 你的名字是什么？
 *input_text name
 
