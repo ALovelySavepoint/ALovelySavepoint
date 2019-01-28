@@ -20,11 +20,55 @@
 *create Sanity 100
 *create Blood 70
 *create yuusha_met false
+*create yuusha_being_your_partner false
+*create current_partner 0
+*create partner1 ""
+*create partner2 ""
+*create date 1
+*comment
+*create slot1 true
+*create slot1_skillnumber 0
+*create slot1_type ""
+*create slot1_description ""
+*comment
+*create slot2 true
+*create slot2_skillnumber 0
+*create slot2_type ""
+*create slot2_description ""
+*comment
+*create slot3 true
+*create slot3_skillnumber 0
+*create slot3_type ""
+*create slot3_description ""
+*comment
+*comment
+*create slot4 false
+*create slot4_skillnumber 0
+*create slot4_type ""
+*create slot4_description ""
+*comment
+*create slot5 false
+*create slot5_skillnumber 0
+*create slot5_type ""
+*create slot5_description ""
+*comment
+*create slot6 true
+*create slot6_skillnumber 0
+*create slot6_type ""
+*create slot6_description ""
+*comment
+*comment
+*comment
+*create place ""
+*create weapon_atk 0
 *comment -------------守序属性-------------
 *comment
 *comment
 *comment -------------混乱属性-------------
 *create hp 300
+*create mp 100
+*create current_hp 300
+*create current_mp 100
 *create strength 50
 *create defense 50
 *create intelligence 50
@@ -45,16 +89,27 @@
 *comment-------------Inventory-------------
 *create money 750
 *create empty_inventory false
-*create sword1 false
-*create sword1_name ""
-*create sword1_description ""
-*create sword1_dura 100
-*create sword0 true
-*create sword0_name ""
-*create sword0_dura 100
-*create cape false
-*create color ""
-*create material ""
+*create weapon_equipped 0
+*create weapon0 true
+*create weapon0_name ""
+*create weapon0_dura 100
+*create weapon1 false
+*create weapon1_name ""
+*create weapon1_description ""
+*create weapon1_dura 100
+*comment 留着以后要搞新武器用
+*create weapon2 false
+*create weapon2_name ""
+*create weapon2_dura 100
+*create weapon3 false
+*create weapon3_name ""
+*create weapon3_dura 100
+*comment 留着以后要搞新武器用
+*create armor_equipped 0
+*create armor0 true
+*create armor0_name ""
+*create armor0_dura 100
+*create ornament_equipped 0
 *create health_potion false
 *create hp_number 0
 *create flask false
@@ -90,7 +145,8 @@
 
 
 *sm_init 存档点 | 6
-
+*image images/basic_diamonds.png
+*line_break
 这是一个使用 ChoiceScript 编写的文字冒险恋爱游戏，
 *line_break
 是一部放飞自我、解放性癖之作，所以不要对它的可玩度和剧情深度有任何指望。
@@ -111,27 +167,27 @@
 
 你的性别是？
 *choice
-    #男性
-       *set gender "男性"
-       你是一名男性。
-       *page_break 继续创建角色
-       *goto alignment
-    #女性
-       *set gender "女性"
-       你是一名女性。
-       *page_break 继续创建角色
-       *goto alignment
-    #中性
-       *set gender "中性"
-       你是中性。
-       *page_break 继续创建角色
-       *goto alignment
-    #双性
-       *set gender "双性"
-       你是一名双性人。
-       *achieve futanari
-       *page_break 继续创建角色
-       *goto alignment
+  #男性
+   *set gender "男性"
+   你是一名男性。
+   *page_break 继续创建角色
+   *goto alignment
+  #女性
+   *set gender "女性"
+   你是一名女性。
+   *page_break 继续创建角色
+   *goto alignment
+  #中性
+   *set gender "中性"
+   你是中性。
+   *page_break 继续创建角色
+   *goto alignment
+  #双性
+   *set gender "双性"
+   你是一名双性人。
+   *achieve futanari
+   *page_break 继续创建角色
+   *goto alignment
 
 *label alignment
 如果能选择，你希望你是什么阵营呢？（重要选项）

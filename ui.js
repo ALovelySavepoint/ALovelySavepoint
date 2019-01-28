@@ -2199,7 +2199,7 @@ function printInput(target, inputType, callback, minimum, maximum, step) {
         if (!input.value) {
             // TODO optional value?
             // TODO configurable error message?
-            asyncAlert("起码填点什么东西。哪怕是个空格也行啊。");
+            asyncAlert("起码填点什么东西。哪怕是个空格也行。");
             return;
         }
         if (window.isIosApp) {

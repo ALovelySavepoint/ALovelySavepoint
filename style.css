@@ -56,6 +56,7 @@ a {
     -webkit-transform: translateX(100%);
     transform: translateX(100%);
   }
+
   to {
     -webkit-transform: none;
     transform: none;
@@ -66,6 +67,7 @@ a {
   from {
     -webkit-transform: translateX(100%);
   }
+
   to {
     -webkit-transform: none;
   }
@@ -91,7 +93,6 @@ a {
 }
 
 /*credits*/
-
 #main.container img {
   max-width: 100%;
 }
@@ -111,7 +112,7 @@ a {
 
 .opposed {
   background-color: #613EAD
-  /* #6D6DFC; */
+    /* #6D6DFC; */
 }
 
 table {
@@ -191,6 +192,7 @@ table {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 0.25;
   }
@@ -202,6 +204,7 @@ table {
     -webkit-transform: translateX(-403%);
     transform: translateX(-403%);
   }
+
   /* borders, maybe? */
   to {
     opacity: 0;
@@ -216,6 +219,7 @@ table {
     -webkit-transform: translateX(0);
     transform: translateX(0);
   }
+
   to {
     opacity: 0.25;
     -webkit-transform: translateX(-403%);
@@ -227,6 +231,7 @@ table {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 0.25;
   }
@@ -237,6 +242,7 @@ table {
     opacity: 0.25;
     -webkit-transform: translateX(-403%);
   }
+
   /* borders, maybe? */
   to {
     opacity: 0;
@@ -249,6 +255,7 @@ table {
     opacity: 0.25;
     -webkit-transform: translateX(0);
   }
+
   to {
     opacity: 0.25;
     -webkit-transform: translateX(-403%);
@@ -269,7 +276,6 @@ table {
 }
 
 /* IE doesn't support label:last-child */
-
 .choice .lastChild {
   border-bottom-width: 1px;
   -webkit-border-bottom-right-radius: 2px;
@@ -308,7 +314,6 @@ input[type=password]:disabled {
 }
 
 /* Reset for Firefox vs. Chrome */
-
 input[type=email], input[type=password] {
   padding: 1px;
   margin: 2px 0;
@@ -508,7 +513,7 @@ body.nightmode a.alertify-button {
   color: white;
 }
 
-body.nightmode img.invert {
+body.nightmode img {
   -webkit-filter: invert(100%);
   filter: invert(100%);
 }
@@ -526,28 +531,35 @@ body.whitemode .next {
   .definition {
     display: none;
   }
+
   #headerLinks {
     line-height: 2;
     /* For tapability */
   }
+
   .gameTitle {
     font-style: normal;
     margin: 0;
   }
+
   #author {
     margin: 0;
     font-size: 1rem;
     font-style: normal;
   }
+
   #advertisement {
     margin: -8px;
   }
+
   .mobileBadges {
     float: none;
   }
+
   #header {
     margin-top: 30px;
   }
+
   /** Floating images should leave enough room for text */
   #text .alignleft, #text .alignright {
     max-width: 45%;

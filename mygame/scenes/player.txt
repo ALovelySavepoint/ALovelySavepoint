@@ -7,49 +7,36 @@
   #你是个强力的法师。
     你是个大法师。从古至今，哪个 RPG 游戏里没有法师的身影！
     *set class "法师"
-    *set sword0_name "木杖"
-    *set sword1_name "枯藤法杖"
-    *set sword1_description "制成这根法杖的枯藤与一颗法力水晶扭曲地长在了一起，成为施法者梦寐以求的优秀媒介。"
+    *gosub class_equipment_set
     *goto pevent1
   #你是个强力的祭司。
     你是个治疗！勇者要想打败魔王，肯定非常需要你的帮助。
     *set class "祭司"
-    *set sword0_name "十字架"
-    *set sword1_name "祷言"
-    *set sword1_description "从名字到外观都十分圣洁的巨大银白色十字架，对神术大有助益。很难想象这居然是恶魔出售给你的武器。"
+    *gosub class_equipment_set
     *goto pevent1
   #你是个强力的盗贼。
     虽然名字难听，但是试问哪个勇者队伍里没有盗贼，哪个危险地图的深处没有宝箱呢？
     *set class "盗贼"
-    *set sword0_name "匕首"
-    *set sword1_name "龙牙匕首"
-    *set sword1_description "十分锋利，即使不是真的龙牙制成，也相差无几。"
+    *gosub class_equipment_set
     *goto pevent1
   #你是个强力的弓箭手。
     你作为弓箭手，百步穿杨。此外，你掌握的生存技能也必然能成为冒险的一大助力。
     *set class "弓箭手"
-    *set sword0_name "长弓"
-    *set sword1_name "湍流"
-    *set sword1_description "轻盈又有韧性的长弓，是每一个弓箭手的毕生追求。"
+    *gosub class_equipment_set
     *goto pevent1
   #你是个强力的骑士。
     你是个骑士，身披盔甲，手举盾牌，因为是光属性，还有小回复技能，可谓是铜墙铁壁了。
     *set class "骑士"
-    *set sword0_name "盾牌"
-    *set sword1_name "白银誓约"
-    *set sword1_description "坚固结实的盾牌，外表光洁，几乎看不见划痕，仿佛永远不会破损。"
-    *set sword1_dura 200
+    *gosub class_equipment_set
     *goto pevent1
   #你是个强力的狂战士。
     你物理攻击力超强，秒天秒地秒空气！虽然作为队伍成员有点非主流，但是高伤害非常实用嘛！
     *set class "狂战士"
-    *set sword0_name "重剑"
-    *set sword1_name "光焰"
-    *set sword1_description "又厚又重，还微微发着热。不知道是用什么材质做出来的，也许是地狱特有的材料也说不定，但使起来很趁手。"
+    *gosub class_equipment_set
     *goto pevent1
   #你……长得美。
     *set class "女主角"
-    *set sword0 false
+    *gosub class_equipment_set
     *set empty_inventory true
     能够拥有这样美貌的人，绝对不可能是路人！
     *line_break
@@ -63,9 +50,9 @@
 
 *label pevent1
 *set count true
-*page_break 继续
-不出你所料的话，很快勇者就会冒出来主动邀请你加入冒险队了！……大概吧。
 *line_break
+不出你所料的话，很快勇者就会冒出来主动邀请你加入冒险队了！……大概吧。
+*page_break 继续
 
 *label beforehearrives
 *temp lampuse false
@@ -73,24 +60,36 @@
 *temp groceryfirsttime true
 *temp forestshopfirsttime true
 *temp time 4
+*temp city1date 1
+*temp inn true
+*temp potionshop true
+*temp grocery true
+*temp info1 true
+*temp info2 true
+*temp info3 true
+*temp info4 true
+*temp info5 true
 *label return_from_town_or_forest
-*if (time = 4)
+*set inn true
+*set potionshop true
+*set grocery true
+*if time = 4
     现在是清晨，你的时间还很充足。你打算去哪里呢？
     *comment 7
     *goto townorforest
-*elseif ((time = 3) and (lampuse != true))
+*elseif ((time = 3) and (lampuse = false))
     快中午了。你现在想做什么？
     *comment 11
     *goto townorforest
-*elseif ((time = 2) and (lampuse != true))
+*elseif ((time = 2) and (lampuse = false))
     下午了。现在你想去哪？
     *comment 15
     *goto townorforest
-*elseif ((time = 1) and (lampuse != true))
+*elseif ((time = 1) and (lampuse = false))
     傍晚了。剩下的时间不多了。现在要做什么？
     *comment 19
     *goto townorforest
-*elseif ((time = 0) and (lampuse != true))
+*elseif ((time = 0) and (lampuse = false))
     已经深夜了。还想做什么吗？
     *comment 23
     *goto townorforest
@@ -116,11 +115,11 @@
     *selectable_if (time = 0) #活命要紧，还是睡吧。
       你想了想觉得活命要紧，还是趁早睡吧。
       *goto player_rest
-  *if (time = 0) and (lampuse = false)
+  *if ((time = 0) and (lampuse = false))
     #不浪了，睡觉。
       天色太晚了，还是睡吧。
       *goto player_rest
-  *if (time = 0) and (lamp)
+  *if ((time = 0) and (lamp))
       #拿出提灯。
         你拎出了从杂货店买来的提灯。
         *set lampuse true
@@ -132,13 +131,24 @@
 *page_break 城镇
 你所在的城镇十分繁荣。你想去哪里呢？
 *choice
-  #药剂店。
-    你走进了药剂店。
-    *page_break 药剂店
-    *goto potionshop
-  #杂货店。
-    *page_break 杂货店
-    *goto grocery
+  *if (inn)
+    #旅店。
+      *set inn false
+      你走进了旅店。
+      *page_break 旅店
+      *goto inn
+  *if (potionshop)
+    #药剂店。
+      *set potionshop false
+      你走进了药剂店。
+      *page_break 药剂店
+      *goto potionshop
+  *if (grocery)
+    #杂货店。
+      *set grocery false
+      你走进了杂货店。
+      *page_break 杂货店
+      *goto grocery
   #装备店。
     暂时没开放！
     *ending
@@ -187,12 +197,12 @@
       店主皱了皱眉：“你闭嘴挑东西就是了，别和我来这套。我忙着呢。”
       *page_break 放弃
       *goto potiontop
-   *if (flask = false)
+   *if not (flask)
       *selectable_if (money >= buy_price_flask) #买炼金用的烧瓶。 [i]（$${buy_price_flask} G）[/i]
          *set empty_inventory false
          *set flask true
          *set money -buy_price_flask
-         *if (money < 0)
+         *if money < 0
             *set money 0
          闻言店主露出了诧异的表情，但也没多说什么，接过你的金币，随手找了个空着的烧瓶递给了你。
          *page_break 收下烧瓶
@@ -200,7 +210,7 @@
    *if (flask)
        #把烧瓶卖给他。 [i]（$${sales_price_flask} G）[/i]
           *set flask false
-          *if ((sword1 = false) and (health_potion = false)) and ((lamp = false) and (forestmap = false))
+          *if ((weapon1 = false) and (health_potion = false)) and ((lamp = false) and (forestmap = false))
              *set empty_inventory true
           *set money +sales_price_flask
           “行吧。”店主把烧瓶收了回去。
@@ -208,7 +218,7 @@
           *goto potiontop
    #买伤药。 [i]（$${buy_price_hp} G x1）[/i]
       店主扬了扬下巴：“都在那儿。要多少看着拿吧。”
-      *input_number buy_hp 0 99
+      *input_number buy_hp 1 99
       *set sales_price_hp (buy_price_hp * buy_hp)
       “一共 ${buy_hp} 瓶是吧？${sales_price_hp} G。”
       *choice
@@ -271,7 +281,7 @@
 
 *label grocerychoice
 *choice
-  *if (lamp = false)
+  *if not (lamp)
     *selectable_if (money >= buy_price_lamp) #买提灯。 [i]（$${buy_price_lamp} G）[/i]
         *set empty_inventory false
         *set lamp true
@@ -284,13 +294,13 @@
   *if (lamp)
      #把提灯卖给他。 [i]（$${sales_price_lamp} G）[/i]
         *set lamp false
-        *if ((sword1 = false) and (health_potion = false)) and ((flask = false) and (forestmap = false))
+        *if ((weapon1 = false) and (health_potion = false)) and ((flask = false) and (forestmap = false))
            *set empty_inventory true
         *set money +sales_price_lamp
         店主收下了提灯。
         *page_break 接过金币
         *goto grocerytop
-  *if (forestmap = false)
+  *if not (forestmap)
      *selectable_if (money >= buy_price_forestmap) #买地图。 [i]（$${buy_price_forestmap} G）[/i]
         *set empty_inventory false
         *set forestmap true
@@ -301,11 +311,11 @@
         *page_break 收下地图
         *goto grocerytop
   *if (forestmap)
-      #把地图卖给他。 [i]（$${sales_price_lamp} G）[/i]
-         *set lamp false
-         *if ((sword1 = false) and (health_potion = false)) and ((flask = false) and (lamp = false))
+      #把地图卖给他。 [i]（$${sales_price_forestmap} G）[/i]
+         *set forestmap false
+         *if ((weapon1 = false) and (health_potion = false)) and ((flask = false) and (lamp = false))
             *set empty_inventory true
-         *set money +sales_price_lamp
+         *set money +sales_price_forestmap
          店主收下了提灯。
          *page_break 接过金币
          *goto grocerytop
@@ -314,6 +324,240 @@
       *page_break 离开杂货店
       *goto town
 *comment ------------杂货店------------------
+*comment ------------------------------------
+*comment ------------旅  店------------------
+*comment ------------------------------------
+*label inn
+*temp finish_eavesdrop false
+*temp lefteavesdroptime 3
+*temp eavesdrop false
+*temp infonum 0
+*temp buy_price_info 5
+*label inntop
+*rand infonum 0 5
+*if time = 3
+  *set eavesdrop false
+  或许是你来得太早了，眼下旅店里还没有什么人。
+  *line_break
+  大概是顾及到还有不少人在楼上睡觉，为数不多几个客人也比较收敛，不是在吃东西，就是压低了声音用接近耳语的音量交谈。
+  旅店老板问：“有什么想买的吗？”
+*if time = 2
+  *set eavesdrop true
+  旅店里人来人往，交谈声不绝于耳。很显然老板忙得够呛，已经没心思顾及你了。
+  *line_break
+  你现在想做什么呢？
+*if time = 1
+  *set eavesdrop true
+  虽然天色已经渐渐暗下来了，旅店里依旧熙熙攘攘，非常热闹。
+  *line_break
+  老板忙得够呛，没心思管你。
+  *line_break
+  你现在想做什么呢？
+*if time = 0
+  *set eavesdrop false
+  夜深了，旅店里人少了许多。
+  *line_break
+  旅店老板惬意地喝着酒，问你：“想来点儿什么吗？”
+
+
+你当前拥有 ${money} G。
+*choice
+  *selectable_if (money >= buy_price_info) #向老板购买情报。 [i]（$${buy_price_info} G）[/i]
+    *label buy_info_choice
+    “你看着脸生，是新来的吧？有什么想打听的尽管问，我知无不言。一条情报只要 ${buy_price_info} 个金币，够实惠吧？”
+
+
+    你当前拥有 ${money} G。
+    *choice
+      *hide_reuse *selectable_if (money >= buy_price_info) #问关于这个城镇的事。 [i]（$${buy_price_info} G）[/i]
+        *set money -buy_price_info
+        “因为地理位置很好，所以发展得还不错的小城镇而已。硬要说起来，其实也没什么特色，平平无奇，普通到直到现在，我们这些居民也没能想出一个合适的名字。话说回来，你不是已经站在这里了吗？与其问我情报，不如自己四处看看，说不定体会更多。”
+        *goto buy_info_return
+      *hide_reuse *selectable_if (money >= buy_price_info) #问关于附近的森林的事。 [i]（$${buy_price_info} G）[/i]
+        *set money -buy_price_info
+        *temp areyouafighter "即使像你这样的冒险者过去，恐怕也凶多吉少。"
+        *if (class = "女主角")
+          *set areyouafighter "你看着就不像能打的人，还是别过去送死了。"
+        “问这个干什么？你不会是想去探险吧？给你一个忠告：不到万不得已，千万不要离城镇太远。这附近是最安全的，就算遇险，充其量也就是普通魔物，你或许还应付得了。但森林深处似乎[b]不只有魔物[/b]。还有什么其实我也不清楚，因为至今没人能生还。${areyouafighter}”
+        *goto buy_info_return
+      *hide_reuse *selectable_if (money >= buy_price_info) #问关于许愿池的事。 [i]（$${buy_price_info} G）[/i]
+        *set money -buy_price_info
+        “许愿池啊……虽然那边很挤，想见到许愿池一面都很难，但还是很值得的。因为它是[b]真的很灵验[/b]。我可不是站在本地人的立场在打广告，你自己去试试就知道了。”
+        *goto buy_info_return
+      *hide_reuse *selectable_if (money >= buy_price_info) #问关于药剂店的事。 [i]（$${buy_price_info} G）[/i]
+        “不知道别的城镇怎么样，不过我们这儿的药剂店主人可称不上热情好客。毕竟他是个精灵炼金师，愿意纡尊降贵、把注意力从草药和炼金材料拨出一点给你就已经很不容易了。”
+        *set money -buy_price_info
+        *goto buy_info_return
+      *hide_reuse *selectable_if (money >= buy_price_info) #问最近有什么值得注意的人经过。 [i]（$${buy_price_info} G）[/i]
+        “‘彗星’你听说过吗？是一位很有名气的大法师。我不懂魔法上的原理，但有些强大的法师身体上的确会出现所谓的‘异色现象’。‘彗星’有一缕头发异色，就像彗尾，因此得名。他最近好像要过来调查什么东西，你也许能在这附近碰见他。”
+        *set money -buy_price_info
+        *goto buy_info_return
+      *hide_reuse *selectable_if (money >= buy_price_info) #问关于魔物的事。 [i]（$${buy_price_info} G）[/i]
+        “魔物一直都有，但自从魔王复活，他们就变得格外活跃、格外有攻击性。它们[b]各有各的弱点[/b]，只要你能找到，战斗就会轻松许多。当然，也有可能这只是统计上的偏差，也许完全没有弱点的魔物确实存在，只是没人能活着离开……倒也有人提出过要安抚、驯化魔物，与它们和睦相处的想法，不知道成没成功。但要我说，那毕竟还是魔物，还是一刀劈了最省事。”
+        *set money -buy_price_info
+        *goto buy_info_return
+      *hide_reuse *selectable_if (money >= buy_price_info) #问关于杂货店的事。 [i]（$${buy_price_info} G）[/i]
+        “杂货店里有卖[b]森林的地图[/b]，虽然不怎么详细，但是聊胜于无嘛。”
+        *set money -buy_price_info
+        *goto buy_info_return
+      *hide_reuse *selectable_if (money >= buy_price_info) #问关于勇者的事。 [i]（$${buy_price_info} G）[/i]
+        “勇者大人啊？我也不太清楚他的事，但他好像是从西边的哪个小村落中过来的。讨伐魔王说不定是他人生中第一次出远门。传闻中说他背了一把[b]黑色的剑[/b]，对于一个勇者来说，还是挺奇怪的。应该是个人喜好吧。”
+        *set money -buy_price_info
+        *goto buy_info_return
+      #没什么可问的了。
+        已经没什么可问的了。你把想问的都问完了。
+        *page_break 不听了
+        *goto inntop
+  *if not (finish_eavesdrop)
+    *if (eavesdrop)
+      #偷听其他人说话。
+        *goto get_info_at_the_inn
+  #该走了。
+        你觉得在这里逗留也没什么意义，决定动身离开。
+        *page_break 离开旅店
+        *goto town
+*comment ------------偷  听------------------
+*label info_complete_check
+*if ((((info1 = false) and (info2 = false)) and ((info3 = false) and (info4 = false))) and (info5 = false))
+  *set finish_eavesdrop true
+  你专心致志地听了一会儿，发觉他们聊的你基本都已经知道了，没什么新鲜的。
+  *page_break 不听了
+*return
+*label get_info_at_the_inn
+*temp reason_you_failed_to_eavesdrop 0
+*rand reason_you_failed_to_eavesdrop 1 3
+*gosub info_complete_check
+*if infonum = 0
+  *set lefteavesdroptime -1
+  *if reason_you_failed_to_eavesdrop = 1
+    有人大声争吵起来，吵得你什么都听不清了。
+  *if reason_you_failed_to_eavesdrop = 2
+    你闻见食物的香味，走了下神，错过了关键信息。
+  *if reason_you_failed_to_eavesdrop = 3
+    你关注的那几个客人聊到一半跑题了，转而谈起了你不感兴趣的话题。
+  *goto eavesdropreturn
+*if (infonum = 1)
+  *if (info1)
+    *set info1 false
+    *set lefteavesdroptime -1
+    你静静坐着，偷听了一会儿客人的闲聊，听到了有意思的内容：
+    *line_break
+    *line_break
+    “森林里最近出现了[b]一口奇怪的泉水[/b]，听那些炼金师的口风似乎是很有用的材料。唉，要不是我水平不行……”
+    *goto eavesdropreturn
+  *rand infonum 0 5
+  *goto get_info_at_the_inn
+*if (infonum = 2)
+  *if (info2)
+    *set info2 false
+    *set lefteavesdroptime -1
+    你静静坐着，偷听了一会儿客人的闲聊，听到了有意思的内容：
+    *line_break
+    *line_break
+    “听说你是从西方来的，那你见到勇者大人了吗？”
+    *line_break
+    “我是没见到勇者大人啦，不过听见到的人说他好像背了一把[b]黑色的剑[/b]……真想不明白，这种颜色也太不适合勇者大人了，不问的话谁会想到传说中的勇者大人背的是黑剑啊？”
+    *goto eavesdropreturn
+  *rand infonum 0 5
+  *goto get_info_at_the_inn
+*if (infonum = 3)
+  *if (info3)
+    *set info3 false
+    *set lefteavesdroptime -1
+    你静静坐着，偷听了一会儿客人的闲聊，听到了有意思的内容：
+    *line_break
+    *line_break
+    “我真是受够了，为什么总有那么多人围在许愿池边啊！他们到底有多少愿要许啊？”
+    *line_break
+    “还别说，那个许愿池是真的灵啊！不枉我千里迢迢赶到这里！”
+    *line_break
+    “怎么我许了愿一点儿用都没有？”
+    *line_break
+    “你心不够诚吧。反正我是把手头能动用的钱都拿来买[b]许愿币[/b]了。”
+    *line_break
+    “那么多许愿币不会把池子塞满吗？”
+    *line_break
+    “应该不会吧？我从小在这边长大的，每天出门都能看见有人往里扔硬币，也不见谁来清理，但许愿池从上方看总是蓝得和海面一样，根本看不出池底有东西。”
+    *goto eavesdropreturn
+  *rand infonum 0 5
+  *goto get_info_at_the_inn
+*if (infonum = 4)
+  *if (info4)
+    *set info4 false
+    *set lefteavesdroptime -1
+    你静静坐着，偷听了一会儿客人的闲聊，听到了有意思的内容：
+    *line_break
+    *line_break
+    “好像有个很厉害的大炼金师的实验室被发现了！我们要不结伴去看看吧？”
+    *line_break
+    “都这时候了，恐怕早被人搜刮一百遍了。”
+    *line_break
+    “但也保不齐会有什么[b]藏得隐蔽一点儿的东西[/b]尚未被发现……那可是大炼金师啊，总知道给自己留个后手吧？”
+    *line_break
+    “你这话也有道理……”
+    *goto eavesdropreturn
+  *rand infonum 0 5
+  *goto get_info_at_the_inn
+*if (infonum = 1)
+  *if (info1)
+    *set info1 false
+    *set lefteavesdroptime -1
+    你静静坐着，偷听了一会儿客人的闲聊，听到了有意思的内容：
+    *line_break
+    *line_break
+    “听说有个大法师会路过这里，不知道他愿不愿意赏脸为我的武器附魔呢？”
+    *line_break
+    “想什么呢？别的法师也就算了，那位可是大名鼎鼎的[b]‘彗星’[/b]！就算肯给你附魔，你恐怕也付不起那个钱。”
+    *line_break
+    “也是啊……说起来，为什么你们都管他叫‘彗星’？”
+    *line_break
+    “不知道是不是真的，但据说那位大法师[b]法力充盈后的异色现象[/b]出现在头发发梢，颜色看起来就像彗星的彗尾。”
+    *goto eavesdropreturn
+  *rand infonum 0 5
+  *goto get_info_at_the_inn
+
+*label eavesdropreturn
+*if lefteavesdroptime > 0
+  *rand infonum 1 5
+  *line_break
+  *line_break
+  还要听别的吗？
+  *choice
+    #再听听别的吧。
+      *goto get_info_at_the_inn
+    #算了。
+      *set finish_eavesdrop true
+      酒馆里人声太嘈杂，你听得耳朵疼，决定放弃。
+      *page_break 不听了
+      *goto inntop
+*if lefteavesdroptime <=0
+  *set finish_eavesdrop true
+  *line_break
+  *line_break
+  你本来还想再听一会儿，但意识到已经没什么能吸引你的东西了，只好作罢。
+  *page_break 不听了
+  *goto inntop
+*comment ------------偷  听------------------
+*comment ------------买情报------------------
+*label buy_info_return
+*if (money >= buy_price_info)
+  *line_break
+  *line_break
+  还要问别的情报吗？
+  *choice
+    #再听听别的吧。 [i]（$${buy_price_info} G）[/i]
+      *goto buy_info_choice
+    #算了。
+      你已经没什么可问的了。
+      *page_break 不听了
+      *goto inntop
+*line_break
+*line_break
+你虽然还想继续问下去，但是已经掏不起情报费了。
+*page_break 不听了
+*goto inntop
+*comment ------------卖情报------------------
+*comment ------------旅  店------------------
 *comment ------------------------------------
 *label forest
 *temp x 0
@@ -425,7 +669,7 @@
             “这就没意思啦。”恶魔撇了撇嘴，放过了你。
             *page_break 结束对话
             *goto foresttop
-   *if ((sword1 = false) (firsttalkwithmadder))
+   *if ((weapon1 = false) and (firsttalkwithmadder))
       *hide_reuse #好、好想摸摸尾巴……
          好、好想摸摸尾巴……
          *line_break
@@ -459,32 +703,33 @@
          恶魔静静等你想了一会儿，问：“怎么样，考虑好了吗？”
          *page_break 考虑好了
          *goto foresttop
-   *if (((sword1 = false) and (firsttalkwithmadder)) and (shakenbythetempt))
+   *if (((weapon1 = false) and (firsttalkwithmadder)) and (shakenbythetempt))
       *hide_reuse #“……能把你买的武器给我看看吗？”
          你最终还是没能禁得住诱惑，颤声问：“……能把你买的武器给我看看吗？”
          *line_break
-         她高高兴兴地答应了：“这把武器叫$!{sword1_name}。买下来对你的实力提升会很大。武力值能翻个倍也说不定哦？”
+         她高高兴兴地答应了：“这把武器叫$!{weapon1_name}。买下来对你的实力提升会很大。武力值能翻个倍也说不定哦？”
          她……说的不是假话。你是个$!{class}，太清楚怎么鉴别这种东西的品质了。这说是传世神兵也不为过。
          *page_break
          *goto foresttop
-   *if (((sword1 = false) and (firsttalkwithmadder)) and (shakenbythetempt))
+   *if (((weapon1 = false) and (firsttalkwithmadder)) and (shakenbythetempt))
       *selectable_if (money >= real_buy_price_s) #就算是和恶魔交易你也认了，买！[i]（$${real_buy_price_s} G）[/i]
          *set empty_inventory false
-         *set sword1 true
+         *set weapon1 true
+         *set weapon_equipped 1
          *set money -real_buy_price_s
          *if (money < 0)
             *set money 0
-         她把$!{sword1_name}交给了你。
+         她把$!{weapon1_name}交给了你。
          以防万一，你拿在手里又仔细地看了看。虽然是恶魔卖的东西，但是应该没什么问题。
          *page_break 装备新武器
          *goto foresttop
-   *if (sword1)
-      *hide_reuse #“可以把$!{sword1_name}退掉吗？”
+   *if (weapon1)
+      *hide_reuse #“可以把$!{weapon1_name}退掉吗？”
       一不小心就冲动消费了。消费主义真是要不得。
       *line_break
-      $!{sword1_name}固然很好，但是你想想觉得这个价格还是太贵了。你恐怕根本用不着这么好的武器。
+      $!{weapon1_name}固然很好，但是你想想觉得这个价格还是太贵了。你恐怕根本用不着这么好的武器。
       *line_break
-      你问：“可以把$!{sword1_name}退掉吗？”
+      你问：“可以把$!{weapon1_name}退掉吗？”
       *line_break
       “对不起，武器一经售出，概不退换哦。”恶魔兴高采烈地说。
       *choice
@@ -506,7 +751,7 @@
           算了，退不了就退不了吧。你认了。
           *page_break 放弃
           *goto foresttop
-   *if (sword1)
+   *if (weapon1)
       *hide_reuse #“那是……什么？”
       “那是……什么？”你买了武器之后就注意到，恶魔从柜子下面掏了只恶魔角出来。
       “虽然看起来很奇怪，不过它实际上是会员卡，”恶魔解释道，“只要 ${real_buy_price_horn} G，从此以后你在我这里买东西都是八折哦！怎么样，要考虑一下吗？”
@@ -542,7 +787,226 @@
 *page_break 旅店
 *if (time != 4)
     可能是今天太累了的缘故，回到旅店之后，你很快就睡着了。
-    *goto_scene player_1
+    *goto player_1
 *else
     回到旅店之后，你在床上翻滚了一会儿，美滋滋地睡着了。
-    *goto_scene player_1
+    *goto player_1
+
+*label player_1
+*page_break 睡觉
+*set time 4
+*set date +1
+*set city1date +1
+你洗漱完往楼下走，发现……
+
+*choice
+  #有个奇怪的 NPC。
+    旅店的一张桌边坐着一个位青年男性，冒险者装扮，一头黑色短发，腰间别着一把剑。
+    *line_break
+    从你的角度看不清他的脸。
+
+
+    令你很在意的是，他给自己武器配的剑鞘实在是简陋异常，似乎只是生搬硬凑上去的。甚至，说它是剑鞘都有些抬举，那根本是一条鞘状的废铜烂铁。
+    *choice
+      #走近看看。
+        意识到有人靠近，冒险者抬起头，手也不经意似的轻轻搭在剑柄上。
+
+
+        借着这个机会，你偷偷打量起他。被周围的路人脸衬托着，对方可以称得上是形貌昳丽了。
+        *line_break
+        可比他的外表更吸引人的是他暗红色的眼睛。看得仔细些的话，就能看出他瞳孔的形状也很奇异，棱角分明，让他看起来几乎像个有别于人类的异种了。
+        *line_break
+        *choice
+          #是你喜欢的类型！问问他要往哪边走，介不介意带着你一起去？
+            他是你喜欢的类型。虽然只见了一面，你却已经对他产生了好感。
+            *line_break
+            勇者用陈述的语气说：“魔王我一个人足够应付了，不需要队友。”
+            *ending
+          #看起来好像是个沉稳靠谱的冒险者，申请和他组队试试看吧？
+            勇者用陈述的语气说：“魔王我一个人足够应付了，不需要队友。”
+            *ending
+          #你总觉得他很危险……还是在惹上麻烦之前快点走吧。
+            *ending
+      #好像不是什么善茬。安全起见，还是躲远些吧。
+        *ending
+  #好像……有人在看你？
+    虽然你下楼时脚步放得很轻，但还是被别人注意到了。
+    *line_break
+    你明显感觉有个人看向了你。大概是触发了什么新事件吧？这么想着，感觉到有人看向你的同时，你也不自觉地看向了对方。
+
+
+    面前的青年男性黑发红眼，一身干练的冒险者打扮，腰上斜挎着一把剑。唯一美中不足之处就是，他的剑鞘不知道为什么十分简陋。但抛开他明显与整体气质不搭的破剑鞘不谈，他这幅相貌足以称之为俊美。
+
+
+    无论放在哪个 RPG 游戏里，长成这样的 NPC 都一定会是重要人物。
+
+
+    你总算知道为什么他会看你了。因为……
+    *choice
+      #你们认识。
+        他和你曾经是一个村的。
+        *line_break
+        *if (class != "女主角")
+            但那时你天天去野外练级，而他既不是旅店老板，也不是药剂、装备店老板，只是个普通村民，所以和他交情不是很深。
+            *line_break
+            不过，他这张与其他路人 NPC 格格不入的脸实在是令你在意。你曾经无数次纳闷过这位到底是个什么身份，怎么会跑到一个普通村子里当游手好闲的村民 A，只是一直没找到合适的机会问罢了。
+
+
+            此时对方正平静地看着你，好像在等待着你的反应。
+        *if (class = "女主角")
+            但那时你总觉得他很难接近，没怎么和他聊过天，和他交情也不是很深。
+            *line_break
+            不过，他这张与其他路人 NPC 格格不入的脸实在是令你在意。你曾经无数次纳闷过这位到底是个什么身份，怎么会跑到一个普通村子里当游手好闲的村民 A，只是一直没找到合适的机会问罢了。
+
+
+            此时对方正平静地看着你，好像在等待着你的反应。
+        *choice
+          #“好久不见。你怎么也出来了？”
+            “好久不见。你怎么也出来了？”你和他打招呼。
+            *line_break
+            “……嗯，”他没什么语气地回答，“因为神将我选为勇者了。”
+
+
+            原来是被选为勇者了……不对，这种事是可以语气这么轻松地说出口的吗？
+            *line_break
+            你愣了一下：“勇、勇者大人？”
+
+
+            不光你不习惯这样称呼他，勇者自己好像也不大习惯。
+            *line_break
+            他不太明显地抿了抿嘴唇：“是的。现在正在讨伐魔王的路上。”
+
+
+            ……而且，好像还很不情愿？
+            *choice
+              #问问勇者愿不愿意带上你一起去冒险。
+                跟着勇者一起讨伐魔王正是你本来的打算。
+                *line_break
+                虽然勇者的人选……有些出乎你的意料吧，但你的想法也没有改变。所以你问勇者愿不愿意带你一起去冒险。
+                *if (class != "女主角")
+                    *line_break
+                    本以为以你的武力值，对方应该会很爽快地答应。可听了你的请求，勇者却沉默了下来。他看了看你，不知为何露出犹豫的神色。
+
+
+                    直到最后他也没想出什么有说服力的说辞，只是说：“会很危险的。”
+                *if (class = "女主角")
+                    *line_break
+                    听了你的请求，勇者沉默了下来。他看了看你，露出犹豫的神色。
+
+
+                    直到最后他也没想出什么有说服力的说辞，只是说：“会很危险的。”
+                *choice
+                  *if (class != "女主角")
+                      #这是……在担心你？
+                        你也不是今天头一次出来冒险了，当然知道会有危险。
+                        *line_break
+                        不如说，找个人组队打魔物，还比你自己一个人单打独斗安全点儿。
+                        *line_break
+                        他这理由……是在担心你会出事吧？
+
+
+                        你想到这一点，心都快化了，说：“可勇者大人您一个人去不是更危险吗？”
+                        *line_break
+                        勇者说：“我不一样。我死在路上也无所谓，会有下一任勇者来接替我。你只是普通的村民，不该遭遇这种事。”
+                        *choice
+                          #“那您就活该送命了吗？”
+                            所以他才会被选为勇者吗？你忽然有点明白了。
+                            *line_break
+                            或许是因为你是转生来的，不觉得勇者的设定有多理所当然，或许是因为想到他曾经也只是个“普通的村民”，你由衷地觉得这一整套的神选定勇者、勇者讨伐魔王的游戏规则，对勇者实在是太残酷了。
+
+
+                            “那您就活该送命了吗？”你低低地说。
+                            *line_break
+                            勇者似乎有些惊讶你会这么说，可是也没给出什么回应，好像是默认了。
+                            *line_break
+                            你更不忍心了：“勇者大人，我们好歹也是旧识了。我实在不愿意见到您独自涉险。至少让我跟着您吧。”
+
+
+                            “如果你坚持要这样……”勇者说，声音几乎可以称得上温柔，“那就和我一起走吧。”
+                            *page_break 入队
+                            *gosub yuusha_joins
+                            *goto return_from_town_or_forest
+                          #“但是我也想为保护这个世界献一份力啊！”
+                            你想明白了，这勇者压根儿没为自己考虑过。
+                            *line_break
+                            他又想着这世界不能毁于魔王之手，又想着你这样的平民百姓不该受到伤害，说来说去就是他自己命贱、怎么牺牲也没关系，俨然是置死生于度外了，从这个角度下手没戏。
+                            *line_break
+                            你换了个策略，慷慨激昂地说：“但是我也想为保护这个世界献一份力啊！”
+
+
+                            勇者果然吃这套，有些动容：“要是你态度这么坚决的话……”
+                            *page_break 入队
+                            *gosub yuusha_joins
+                            *goto return_from_town_or_forest
+                  *if (class = "女主角")
+                      #“我落单更危险啊！”
+                        你感觉你的武力值被勇者嫌弃了，脱口而出：“我落单更危险啊！”
+                        *line_break
+                        勇者大概没能料想到你会如此回应，不由睁大了眼睛。
+                        *line_break
+                        你发自肺腑地说：“勇者大人，我不擅长战斗，无论去哪里都很危险。跟着您一起走，我反而更有安全感。”
+
+
+                        其实你只是最后挣扎一下，总觉得勇者有重任在身，不会答应这种给自己添个拖油瓶的事。
+                        *line_break
+                        没想到勇者轻轻叹了口气，竟然被你说动了：“说得也是。那就一起走吧。”
+                        *page_break 入队
+                        *gosub yuusha_joins
+                        *goto return_from_town_or_forest
+                  #那好吧……
+                    你放弃了。既然他不愿意带你一起去，强求也没意思。
+                    *ending
+              #这勇者感觉也太不靠谱了，在他主动问你要不要入队之前赶紧溜吧。
+                *ending
+          #别开眼睛，装作没看见，快步走开。
+            *ending
+  #没什么新鲜的，还是走吧。
+    你径直离开了旅店。
+    *ending
+
+*label yuusha_joins
+*set yuusha_met true
+*set current_partner +1
+*set yuusha_being_your_partner true
+*if current_partner = 1
+  *set partner1 = "勇者"
+*if current_partner = 2
+  *set partner2 = "勇者"
+*return
+
+*label class_equipment_set
+*if (class = "法师")
+    *set armor0_name "法袍"
+    *set weapon0_name "木杖"
+    *set weapon1_name "枯藤法杖"
+    *set weapon1_description "制成这根法杖的枯藤与一颗法力水晶扭曲地长在了一起，成为施法者梦寐以求的优秀媒介。"
+*if (class = "祭司")
+    *set armor0_name "祭司袍"
+    *set weapon0_name "十字架"
+    *set weapon1_name "祷言"
+    *set weapon1_description "从名字到外观都十分圣洁的巨大银白色十字架，对神术大有助益。很难想象这居然是恶魔出售给你的武器。"
+*if (class = "盗贼")
+    *set armor0_name ""
+    *set weapon0_name "匕首"
+    *set weapon1_name "龙牙匕首"
+    *set weapon1_description "十分锋利，即使不是真的龙牙制成，也相差无几。"
+*if (class = "弓箭手")
+    *set armor0_name "猎衣"
+    *set weapon0_name "长弓"
+    *set weapon1_name "湍流"
+    *set weapon1_description "轻盈又有韧性的长弓，是每一个弓箭手的毕生追求。"
+*if (class = "骑士")
+    *set armor0_name "铠甲"
+    *set weapon0_name "盾牌"
+    *set weapon1_name "白银誓约"
+    *set weapon1_description "坚固结实的盾牌，外表光洁，几乎看不见划痕，仿佛永远不会破损。"
+    *set weapon1_dura 200
+*if (class = "狂战士")
+    *set armor0_name "轻铠"
+    *set weapon0_name "重剑"
+    *set weapon1_name "光焰"
+    *set weapon1_description "又厚又重，还微微发着热。不知道是用什么材质做出来的，也许是地狱特有的材料也说不定，但使起来很趁手。"
+*if (class = "女主角")
+    *set armor0 false
+    *set weapon0 false
+*return

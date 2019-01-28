@@ -1,0 +1,200 @@
+*label minievent_check
+
+
+*label monster1_check
+*if the_monster_you_met_1 = 1
+  *set monster1_name "森林狼"
+  *set monster1_weakness "火"
+  *set monster1_hp 120
+  *set monster1_attack 30
+  *set monster1_agility 60
+  *set monster1_description_appearance "一头野狼从林间蹿了出来，向你露出獠牙。虽然并不算是魔物，但它显然也没有要与你和平相处的想法。"
+  *set monster1_description_attack "森林狼露出利爪和獠牙，扑了过来！"
+  *set monster1_description_weakness "森林狼毕竟是动物，你猜想它大概害怕火焰。"
+  *set monster1_description_death "你杀死了森林狼。它哀嚎一声，重重地倒在了地上。"
+*if the_monster_you_met_1 = 2
+  *set monster1_name "绿色史莱姆"
+  *set monster1_weakness "史莱姆"
+  *set monster1_hp 60
+  *set monster1_attack 20
+  *set monster1_agility 30
+  *set monster1_description_appearance "你的敌人蠕动着现身了。它就是无论哪个 RPG 世界都能见到的人气魔物史莱姆！"
+  *set monster1_description_attack "绿色史莱姆发起了攻击！"
+  *set monster1_description_weakness "史莱姆是 RPG 世界中魔物的底层，从什么角度来看都很弱，弱到让人有点无从下手。不过它不过是个史莱姆，你想杀它又何必要针对弱点、指定战术呢？"
+  *set monster1_description_death "绿色史莱姆化作一滩烂泥一般的胶状物，趴在地上不动了。"
+*if the_monster_you_met_1 = 3
+  *set monster1_name "树精"
+  *set monster1_weakness "火"
+  *set monster1_hp 180
+  *set monster1_attack 10
+  *set monster1_agility 10
+  *set monster1_description_appearance "森林中的一棵树在你走近时左右摇晃了几下，居然用根系作为支撑，站了起来，还向你走了几步。"
+  *set monster1_description_attack "树精将枝叶用力抽向你。"
+  *set monster1_description_weakness "说到底树精也只不过是会动的树罢了，你猜想火攻大概对它有用。"
+  *set monster1_description_death "树精砸在地面上，一时间森林中地动山摇。"
+*if the_monster_you_met_1 = 4
+  *set monster1_name "红色史莱姆"
+  *set monster1_weakness "史莱姆"
+  *set monster1_hp 70
+  *set monster1_attack 30
+  *set monster1_agility 30
+  *set monster1_description_appearance "你的敌人蠕动着现身了。它就是无论哪个 RPG 世界都能见到的人气魔物史莱姆！不过这只史莱姆身体是半透明的红色，让人看着有点不习惯……也许是变异了？"
+  *set monster1_description_attack "红色史莱姆发起了攻击！"
+  *set monster1_description_weakness "史莱姆是 RPG 世界中魔物的底层，从什么角度来看都很弱，弱到让人有点无从下手。不过它不过是个史莱姆，你想杀它又何必要针对弱点、指定战术呢？"
+  *set monster1_description_death "红色史莱姆化作一滩烂泥一般的胶状物，趴在地上不动了。"
+*temp monster_number_check 0
+*comment 五分之一的几率遇到第二只
+*rand monster_number_check 1 5
+*return
+
+*label monster2_check
+*if the_monster_you_met_2 = 1
+  *set monster2_name "森林狼"
+  *set monster2_weakness "火"
+  *set monster2_hp 120
+  *set monster2_attack 30
+  *set monster2_agility 60
+  *set monster2_description_appearance "你的另一个敌人也从林间踱了过来，是一头森林狼。"
+  *set monster2_description_attack "森林狼露出利爪和獠牙，扑了过来！"
+  *set monster2_description_weakness "森林狼毕竟是动物，你猜想它大概害怕火焰。"
+  *set monster2_description_death "你杀死了森林狼。它哀嚎一声，重重地倒在了地上。"
+  *if the_monster_you_met_1 = 1
+    *set monster2_description_appearance "你的另一个敌人也是一头森林狼。"
+*if the_monster_you_met_2 = 2
+  *set monster2_name "绿色史莱姆"
+  *set monster2_weakness "史莱姆"
+  *set monster2_hp 60
+  *set monster2_attack 20
+  *set monster2_agility 30
+  *set monster2_description_appearance "你的另一个敌人是普通的魔物史莱姆。"
+  *set monster2_description_attack "绿色史莱姆发起了攻击！"
+  *set monster2_description_weakness "史莱姆是 RPG 世界中魔物的底层，从什么角度来看都很弱，弱到让人有点无从下手。不过它不过是个史莱姆，你想杀它又何必要针对弱点、指定战术呢？"
+  *set monster2_description_death "绿色史莱姆化作一滩烂泥一般的胶状物，趴在地上不动了。"
+  *if the_monster_you_met_1 = 2
+    *set monster2_description_appearance "你的另一个敌人也是一只绿油油的史莱姆。它们似乎是结伴过来的。"
+  *if the_monster_you_met_1 = 4
+    *set monster2_description_appearance "你的另一个敌人也是一只史莱姆，只不过颜色是红的。"
+*if the_monster_you_met_2 = 3
+  *set monster2_name "树精"
+  *set monster2_weakness "火"
+  *set monster2_hp 180
+  *set monster2_attack 10
+  *set monster2_agility 10
+  *set monster2_description_appearance "就在这时，一棵巨树拔地而起，从遍布褶皱的树皮中张开了一双属于魔物的眼睛，显然它也有参战的意图。"
+  *set monster2_description_attack "树精将树枝用力抽向你。它动作得太厉害，还甩下不少叶子，真是伤敌又伤己的攻击方法啊。"
+  *set monster2_description_weakness "说到底树精也只不过是会动的树罢了，你猜想火攻大概对它有用。"
+  *set monster2_description_death "树精失去战斗能力，重重砸到地面上，一时间森林中地动山摇。"
+  *if the_monster_you_met_1 = 3
+    *set monster2_description_appearance "你的另一个敌人也是一只树精。两棵巨树并排站在你面前，给人十足的压迫感。"
+*if the_monster_you_met_2 = 4
+  *set monster2_name "红色史莱姆"
+  *set monster2_weakness "史莱姆"
+  *set monster2_hp 70
+  *set monster2_attack 30
+  *set monster2_agility 30
+  *set monster2_description_appearance "你的另一个敌人是红色的魔物史莱姆。"
+  *set monster2_description_attack "红色史莱姆发起了攻击！"
+  *set monster2_description_weakness "史莱姆是 RPG 世界中魔物的底层，从什么角度来看都很弱，弱到让人有点无从下手。不过它不过是个史莱姆，你想杀它又何必要针对弱点、指定战术呢？"
+  *set monster2_description_death "红色史莱姆化作一滩烂泥一般的胶状物，趴在地上不动了。"
+  *if the_monster_you_met_1 = 4
+    *set monster2_description_appearance "你的另一个敌人也是一只红彤彤的史莱姆。它们似乎是结伴过来的。"
+  *if the_monster_you_met_1 = 2
+    *set monster2_description_appearance "你的另一个敌人也是一只史莱姆，只不过颜色更常见，是绿色的。"
+*return
+
+
+*label partner_check
+*if (partner1 = "勇者")
+  *set partner1_hp 1000
+*return
+
+*comment ----这里用gosub进----
+*label battle_start
+
+*comment monster1
+*if (place = "森林")
+  *temp the_monster_you_met_1 0
+  *rand the_monster_you_met_1 1 4
+  *temp the_monster_you_met_2 0
+  *rand the_monster_you_met_2 1 4
+*temp monster1_name ""
+*temp monster1_weakness ""
+*temp monster1_hp 0
+*temp monster1_attack 0
+*temp monster1_agility 0
+*temp monster1_description_appearance ""
+*comment 这里temp一下monster2的appearance，如果没有第二只怪在下面界面就直接显示""，什么也不影响
+*temp monster2_description_appearance ""
+*temp monster1_description_attack ""
+*temp monster1_description_weakness ""
+*temp monster1_description_death ""
+*gosub monster1_check
+*temp monster1_hp_max monster1_hp
+*comment monster2
+*if monster_number_check = 5
+  *temp monster2_name ""
+  *temp monster2_weakness ""
+  *temp monster2_hp 0
+  *temp monster2_attack 0
+  *temp monster2_agility 0
+  *temp monster2_description_attack ""
+  *temp monster2_description_weakness ""
+  *temp monster2_description_death ""
+  *gosub monster2_check
+  *temp monster2_hp_max monster2_hp
+*temp won false
+*temp escaped false
+*if current_partner = 1
+  *temp partner1_hp_max 0
+  *temp partner1_hp 0
+  *temp partner1_hp_max partner1_hp
+*if current_partner = 2
+  *temp partner1_hp_max 0
+  *temp partner1_hp 0
+  *temp partner1_hp_max partner1_hp
+  *temp partner2_hp_max 0
+  *temp partner2_hp 0
+  *temp partner2_hp_max partner2_hp
+
+${monster1_description_appearance}${monster2_description_appearance}
+*line_break
+*goto turn
+
+*label battle_return
+*line_break
+
+*label turn
+*set player_action_point player_actions
+*set opp_action_point opp_actions
+*if agility > monster_agility
+  *gosub player_turn
+  *gosub monster_turn
+*if agility < monster_agility
+  *gosub player_turn
+  *gosub monster_turn
+*if agility = monster_agility
+  *if current_hp > monster_hp
+  *gosub player_turn
+  *gosub monster_turn
+*if (won)
+  *page_break
+  You are victorious.
+  *return
+*if (escaped)
+  *page_break
+  You have escaped.
+  *return
+*goto turn
+*return
+
+
+*label player_turn
+*temp chart_hp
+*temp chart_mp
+*set chart_hp current_hp
+*set chart_mp current_mp
+*set chart_hp &" / ${hp}"
+*set chart_mp &" / ${hp}"
+*stat_chart
+    text chart_hp HP
+    text chart_mp MP

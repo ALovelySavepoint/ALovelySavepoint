@@ -23,7 +23,7 @@
     *else
         先完善人设再来看属性啦！
     *finish
-*elseif (alignment = "中立")
+*if (alignment = "中立")
     *stat_chart
         text name 姓名
         text gender 性别
@@ -32,8 +32,8 @@
     *stat_chart
         text class 职业
     *finish
-*elseif (alignment = "守序")
-    *if ((count) and (yuusha_met))
+*if (alignment = "守序")
+    *if (count)
         [b]你[/b]
         *stat_chart
             text name 姓名
@@ -45,16 +45,31 @@
         *if (empty_inventory)
           *set comma false
           *set inventory &"什么也没有"
-        *if (sword0)
+        *if (armor0)
           *if comma
               *set inventory &"、"
           *set comma true
-          *set inventory &"$!{sword0_name} （耐久度：${sword1_dura}）"
-        *if (sword1)
+          *set inventory &"$!{armor0_name}"
+          *if armor_equipped = 0
+              *set inventory &"（已装备）"
+        *if (weapon0)
           *if comma
               *set inventory &"、"
           *set comma true
-          *set inventory &"$!{sword1_name} （$!{sword1_description}耐久度：${sword1_dura}）"
+          *set inventory &"$!{weapon0_name} "
+          *if weapon_equipped != 0
+              *set inventory &"（耐久度：${weapon0_dura}）"
+          *if weapon_equipped = 0
+              *set inventory &"（耐久度：${weapon0_dura}，已装备）"
+        *if (weapon1)
+          *if comma
+              *set inventory &"、"
+          *set comma true
+          *set inventory &"$!{weapon1_name} "
+          *if weapon_equipped != 1
+              *set inventory &"（$!{weapon1_description}耐久度：${weapon1_dura}）"
+          *if weapon_equipped = 1
+              *set inventory &"（$!{weapon1_description}耐久度：${weapon1_dura}，已装备）"
         *if (flask)
            *if comma
               *set inventory &"、"
@@ -80,77 +95,30 @@
               *set inventory &"、"
            *set comma true
            *set inventory &"恶魔角"
-        *set inventory &"。"
+           *comment         *set inventory &"。"
         *stat_chart
             text inventory 持有物品
             text money_G 金币
         *line_break
         *line_break
-        [b]勇者[/b]
-        *stat_chart
-            opposed_pair Blood
-                人类
-                黑龙
-            percent Sanity 理智
-        *finish
-    *if ((count) and (yuusha_met = false))
-        [b]你[/b]
-        *stat_chart
-            text name 姓名
-            text gender 性别
-            text alignment 阵营
-        *line_break
-        *stat_chart
-            text class 职业
-        *if (empty_inventory)
-          *set comma false
-          *set inventory &"什么也没有。"
-        *if (sword0)
-          *if comma
-              *set inventory &"、"
-          *set comma true
-          *set inventory &"$!{sword0_name} （耐久度：${sword0_dura}）"
-        *if (sword1)
-          *if comma
-              *set inventory &"、"
-          *set comma true
-          *set inventory &"$!{sword1_name} （$!{sword1_description}耐久度：${sword1_dura}）"
-        *if (flask)
-           *if comma
-              *set inventory &"、"
-           *set comma true
-           *set inventory &"烧瓶"
-        *if (lamp)
-           *if comma
-              *set inventory &"、"
-           *set comma true
-           *set inventory &"提灯"
-        *if (forestmap)
-           *if comma
-              *set inventory &"、"
-           *set comma true
-           *set inventory &"地图"
-        *if (health_potion)
-           *if comma
-              *set inventory &"、"
-           *set comma true
-           *set inventory &"伤药（x${hp_number}）"
-        *stat_chart
-            text inventory 持有物品
-            text money_G 金币
+        *if (yuusha_being_your_partner)
+          [b]勇者[/b]
+          *stat_chart
+              opposed_pair Blood
+                  人类
+                  黑龙
+              percent Sanity 理智
         *finish
     *if (count = false)
-        [b]你[/b]
-        *stat_chart
-            text name 姓名
-            text gender 性别
-            text alignment 阵营
-        *finish
-*else
-    *stat_chart
-        text name 姓名
-        text gender 性别
-    *line_break
-    你还没有选择阵营。
-    *finish
+      [b]你[/b]
+      *stat_chart
+          text name 姓名
+          text gender 性别
+          text alignment 阵营
+      *finish
+*stat_chart
+    text name 姓名
+    text gender 性别
+*line_break
+[b]你还没有选择阵营。[/b]
 *finish

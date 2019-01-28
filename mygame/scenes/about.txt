@@ -68,6 +68,10 @@ MutonElite（
 *link https://forum.choiceofgames.com/t/tutorial-basic-inventory-shop-system/2629/1 Tutorial : Basic Inventory & Shop System
 ）
 *line_break
+Zenovarse（
+*link https://forum.choiceofgames.com/t/free-code-for-combat-systems-in-choicescript/46677 Free Code for Combat Systems in ChoiceScript
+）
+*line_break
 一位好心 GN 发在 xqw 的范例（
 *link https://idelem.github.io/sexpert-guide/mygame/index.html 银河系老司机指南
 ）
