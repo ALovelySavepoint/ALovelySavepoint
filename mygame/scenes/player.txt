@@ -1,5 +1,6 @@
 ﻿*page_break 进入游戏
 你生前没少打 RPG 游戏，死后转生到一个魔王勇者世界观的 RPG 游戏世界，其实还挺高兴，生活得也挺不错的。
+*line_break
 只不过，前段时间，魔王又复活了。好在受到神的指引的勇者已经踏上了讨伐魔王的征程。按照一般剧情发展，正义的勇者一方肯定能赢，不久世界就会恢复平静了。你倒不是担心这个。
 *line_break
 你担心的问题是：虽然还没见到勇者，但你怀疑自己可能是勇者小队的一份子。原因是你目前所在的城镇是勇者的必经之路，而且……
@@ -30,7 +31,7 @@
     *gosub class_equipment_set
     *goto pevent1
   #你是个强力的狂战士。
-    你物理攻击力超强，秒天秒地秒空气！虽然作为队伍成员有点非主流，但是高伤害非常实用嘛！
+    你物理攻击力超强，秒天秒地秒空气！虽然作为勇者的队友有些非主流，但是高伤害非常实用嘛。
     *set class "狂战士"
     *gosub class_equipment_set
     *goto pevent1
@@ -46,6 +47,8 @@
         ……虽然说你是个男的吧。不过谁也没有规定男性生物就不能站女主位嘛。
     *if (gender = "双性")
         不过，会让你站女主位的游戏，恐怕也不是什么正经 RPG……
+    *if (gender = "无性")
+        ……虽然不知道这世界上怎么会有性别为无性的女主角。
     *goto pevent1
 
 *label pevent1
@@ -210,8 +213,7 @@
    *if (flask)
        #把烧瓶卖给他。 [i]（$${sales_price_flask} G）[/i]
           *set flask false
-          *if ((weapon1 = false) and (health_potion = false)) and ((lamp = false) and (forestmap = false))
-             *set empty_inventory true
+          *gosub empty_inventory_check
           *set money +sales_price_flask
           “行吧。”店主把烧瓶收了回去。
           *page_break 接过金币
@@ -294,8 +296,7 @@
   *if (lamp)
      #把提灯卖给他。 [i]（$${sales_price_lamp} G）[/i]
         *set lamp false
-        *if ((weapon1 = false) and (health_potion = false)) and ((flask = false) and (forestmap = false))
-           *set empty_inventory true
+        *gosub empty_inventory_check
         *set money +sales_price_lamp
         店主收下了提灯。
         *page_break 接过金币
@@ -313,8 +314,7 @@
   *if (forestmap)
       #把地图卖给他。 [i]（$${sales_price_forestmap} G）[/i]
          *set forestmap false
-         *if ((weapon1 = false) and (health_potion = false)) and ((flask = false) and (lamp = false))
-            *set empty_inventory true
+         *gosub empty_inventory_check
          *set money +sales_price_forestmap
          店主收下了提灯。
          *page_break 接过金币
@@ -340,6 +340,7 @@
   或许是你来得太早了，眼下旅店里还没有什么人。
   *line_break
   大概是顾及到还有不少人在楼上睡觉，为数不多几个客人也比较收敛，不是在吃东西，就是压低了声音用接近耳语的音量交谈。
+  *line_break
   旅店老板问：“有什么想买的吗？”
 *if time = 2
   *set eavesdrop true
@@ -430,7 +431,7 @@
 *if infonum = 0
   *set lefteavesdroptime -1
   *if reason_you_failed_to_eavesdrop = 1
-    有人大声争吵起来，吵得你什么都听不清了。
+    旁边几个人大声争吵起来，吵得你什么都听不清了。
   *if reason_you_failed_to_eavesdrop = 2
     你闻见食物的香味，走了下神，错过了关键信息。
   *if reason_you_failed_to_eavesdrop = 3
@@ -545,7 +546,7 @@
   *line_break
   还要问别的情报吗？
   *choice
-    #再听听别的吧。 [i]（$${buy_price_info} G）[/i]
+    #再听听别的吧。
       *goto buy_info_choice
     #算了。
       你已经没什么可问的了。
@@ -653,7 +654,7 @@
       “当然是为了挣钱啊。”茜色的恶魔似乎是听见你的心声，如此回应道。
       *line_break
       *line_break
-      不对，好、好像不是似乎。
+      ……不对，好、好像不是似乎。
       *choice
           #“你、你能知道我在想什么？”
             *set firsttalkwithmadder true
@@ -753,7 +754,7 @@
           *goto foresttop
    *if (weapon1)
       *hide_reuse #“那是……什么？”
-      “那是……什么？”你买了武器之后就注意到，恶魔从柜子下面掏了只恶魔角出来。
+      “那是……什么？”你买了武器之后就注意到，恶魔从柜子下面掏了只恶魔角出来。你这才发现她头上的角并不是天生不对称，而是一边的角被掰断了一段。目测一下，被掰掉的部分差不多就是她手中那个恶魔角的大小。颜色也一样。……这恐怕真是她自己的角。
       “虽然看起来很奇怪，不过它实际上是会员卡，”恶魔解释道，“只要 ${real_buy_price_horn} G，从此以后你在我这里买东西都是八折哦！怎么样，要考虑一下吗？”
       *label vip_card_choice
       *choice
@@ -814,20 +815,19 @@
 
         借着这个机会，你偷偷打量起他。被周围的路人脸衬托着，对方可以称得上是形貌昳丽了。
         *line_break
-        可比他的外表更吸引人的是他暗红色的眼睛。看得仔细些的话，就能看出他瞳孔的形状也很奇异，棱角分明，让他看起来几乎像个有别于人类的异种了。
+        可比他的外表更吸引人的是他暗色的眼睛。看得仔细些的话，就能看出他瞳孔的形状也很奇异，棱角分明，让他看起来几乎像个有别于人类的异种了。
         *line_break
         *choice
-          #是你喜欢的类型！问问他要往哪边走，介不介意带着你一起去？
-            他是你喜欢的类型。虽然只见了一面，你却已经对他产生了好感。
-            *line_break
-            勇者用陈述的语气说：“魔王我一个人足够应付了，不需要队友。”
-            *ending
           #看起来好像是个沉稳靠谱的冒险者，申请和他组队试试看吧？
-            勇者用陈述的语气说：“魔王我一个人足够应付了，不需要队友。”
+            勇者被你问得一愣，有些奇怪地看着你。……为什么他会露出那种表情？是你说错什么了吗？
+            最终，他用陈述的语气说：“魔王我一个人足够应付了，不需要队友。”
             *ending
           #你总觉得他很危险……还是在惹上麻烦之前快点走吧。
+            不知为何，你感觉他非常危险，尤其是那双眼睛。也说不上来为什么，只是直觉而已。
+            总之，还是在惹上麻烦之前，快点离他远一点吧。
             *ending
       #好像不是什么善茬。安全起见，还是躲远些吧。
+        你总感觉他好像不是什么善茬。安全起见，还是躲远些吧。
         *ending
   #好像……有人在看你？
     虽然你下楼时脚步放得很轻，但还是被别人注意到了。
@@ -835,7 +835,7 @@
     你明显感觉有个人看向了你。大概是触发了什么新事件吧？这么想着，感觉到有人看向你的同时，你也不自觉地看向了对方。
 
 
-    面前的青年男性黑发红眼，一身干练的冒险者打扮，腰上斜挎着一把剑。唯一美中不足之处就是，他的剑鞘不知道为什么十分简陋。但抛开他明显与整体气质不搭的破剑鞘不谈，他这幅相貌足以称之为俊美。
+    面前的青年男性黑发黑眼，一身干练的冒险者打扮，腰上斜挎着一把剑。唯一美中不足之处就是，他的剑鞘不知道为什么十分简陋。但抛开他明显与整体气质不搭的破剑鞘不谈，他这幅相貌足以称之为俊美。
 
 
     无论放在哪个 RPG 游戏里，长成这样的 NPC 都一定会是重要人物。
@@ -877,7 +877,7 @@
             他不太明显地抿了抿嘴唇：“是的。现在正在讨伐魔王的路上。”
 
 
-            ……而且，好像还很不情愿？
+            ……而且，好像他还一副很不情愿的样子？
             *choice
               #问问勇者愿不愿意带上你一起去冒险。
                 跟着勇者一起讨伐魔王正是你本来的打算。
@@ -891,10 +891,10 @@
                     直到最后他也没想出什么有说服力的说辞，只是说：“会很危险的。”
                 *if (class = "女主角")
                     *line_break
-                    听了你的请求，勇者沉默了下来。他看了看你，露出犹豫的神色。
+                    听了你的请求，勇者沉默了下来。大概是看不上你的武力值吧。他看了看你，露出犹豫的神色。
 
 
-                    直到最后他也没想出什么有说服力的说辞，只是说：“会很危险的。”
+                    直到最后他也没说出什么重话，只是说：“会很危险的。”
                 *choice
                   *if (class != "女主角")
                       #这是……在担心你？
@@ -905,7 +905,7 @@
                         他这理由……是在担心你会出事吧？
 
 
-                        你想到这一点，心都快化了，说：“可勇者大人您一个人去不是更危险吗？”
+                        你想到这一点，心都快化了，问他：“可勇者大人您一个人去不是更危险吗？”
                         *line_break
                         勇者说：“我不一样。我死在路上也无所谓，会有下一任勇者来接替我。你只是普通的村民，不该遭遇这种事。”
                         *choice
@@ -915,39 +915,39 @@
                             或许是因为你是转生来的，不觉得勇者的设定有多理所当然，或许是因为想到他曾经也只是个“普通的村民”，你由衷地觉得这一整套的神选定勇者、勇者讨伐魔王的游戏规则，对勇者实在是太残酷了。
 
 
-                            “那您就活该送命了吗？”你低低地说。
+                            “那您就活该送命了吗？”你说。
                             *line_break
-                            勇者似乎有些惊讶你会这么说，可是也没给出什么回应，好像是默认了。
+                            勇者没给出什么回应，好像是默认了。
                             *line_break
-                            你更不忍心了：“勇者大人，我们好歹也是旧识了。我实在不愿意见到您独自涉险。至少让我跟着您吧。”
+                            你简直有些可怜他：“我们好歹也是旧识了。我实在不愿意见到您独自涉险。至少让我跟着吧。”
 
 
-                            “如果你坚持要这样……”勇者说，声音几乎可以称得上温柔，“那就和我一起走吧。”
+                            “如果你坚持，”勇者像认命了一样叹气，“就和我一起走吧。”
                             *page_break 入队
                             *gosub yuusha_joins
                             *goto return_from_town_or_forest
                           #“但是我也想为保护这个世界献一份力啊！”
-                            你想明白了，这勇者压根儿没为自己考虑过。
+                            你想明白了：面前的勇者心怀苍生，唯独没为自己考虑过。
                             *line_break
                             他又想着这世界不能毁于魔王之手，又想着你这样的平民百姓不该受到伤害，说来说去就是他自己命贱、怎么牺牲也没关系，俨然是置死生于度外了，从这个角度下手没戏。
                             *line_break
                             你换了个策略，慷慨激昂地说：“但是我也想为保护这个世界献一份力啊！”
 
 
-                            勇者果然吃这套，有些动容：“要是你态度这么坚决的话……”
+                            勇者似乎吃这一套，微微动容：“要是你态度这么坚决的话……”
                             *page_break 入队
                             *gosub yuusha_joins
                             *goto return_from_town_or_forest
                   *if (class = "女主角")
                       #“我落单更危险啊！”
-                        你感觉你的武力值被勇者嫌弃了，脱口而出：“我落单更危险啊！”
+                        你知道你的武力值被勇者嫌弃了，脱口而出：“我落单更危险啊！”
                         *line_break
                         勇者大概没能料想到你会如此回应，不由睁大了眼睛。
                         *line_break
                         你发自肺腑地说：“勇者大人，我不擅长战斗，无论去哪里都很危险。跟着您一起走，我反而更有安全感。”
 
 
-                        其实你只是最后挣扎一下，总觉得勇者有重任在身，不会答应这种给自己添个拖油瓶的事。
+                        其实你只是最后挣扎一下。实际上你心里总觉得勇者有重任在身，不会答应这种给自己添个拖油瓶的事。
                         *line_break
                         没想到勇者轻轻叹了口气，竟然被你说动了：“说得也是。那就一起走吧。”
                         *page_break 入队
@@ -957,8 +957,13 @@
                     你放弃了。既然他不愿意带你一起去，强求也没意思。
                     *ending
               #这勇者感觉也太不靠谱了，在他主动问你要不要入队之前赶紧溜吧。
+                你感觉这勇者感觉也太不靠谱了，不知道神是怎么把他选出来的。说不定你单打独斗都比带着他要好一些。
+                *line_break
+                还是在他主动问你要不要入队之前赶紧溜吧。
                 *ending
           #别开眼睛，装作没看见，快步走开。
+            在村子里那段时间你又和他没什么交情，现在去搭话会很尴尬的吧。
+            你别开眼睛，装作没看见，快步走开。
             *ending
   #没什么新鲜的，还是走吧。
     你径直离开了旅店。
@@ -972,6 +977,34 @@
   *set partner1 = "勇者"
 *if current_partner = 2
   *set partner2 = "勇者"
+*return
+
+*label empty_inventory_check
+*if (armor0)
+  *set empty_inventory false
+  *return
+*if (weapon0)
+  *set empty_inventory false
+  *return
+*if (weapon1)
+  *set empty_inventory false
+  *return
+*if (flask)
+  *set empty_inventory false
+  *return
+*if (lamp)
+  *set empty_inventory false
+  *return
+*if (forestmap)
+  *set empty_inventory false
+  *return
+*if (health_potion)
+  *set empty_inventory false
+  *return
+*if (madder_horn)
+  *set empty_inventory false
+  *return
+*set empty_inventory true
 *return
 
 *label class_equipment_set

@@ -82,23 +82,20 @@
 *line_break
 你的致命弱点是……
 *choice
-  *if ((strength = 50) or (intelligence = 50))
-      #伤害太低。
-        *set strength 35
-        *set intelligence 35
-        你的攻击力太低了。
-        *goto count
-  *if ((defense = 50) or (magic_resistance = 50))
-      #太不禁揍。
-        *set defense 35
-        *set magic_resistance 35
-        你的防御力太低了。
-        *goto count
-  *if (hp = 300)
-      #皮太脆。
-        *set hp 150
-        你血皮太薄，不像守恶魔城的小 BOSS，反而像城外的史莱姆。
-        *goto count
+  *selectable_if ((strength = 70) or (intelligence = 70)) #伤害太低。
+    *set strength 35
+    *set intelligence 35
+    你的攻击力太低了。
+    *goto count
+  *selectable_if ((defense = 70) or (magic_resistance = 70)) #太不禁揍。
+    *set defense 35
+    *set magic_resistance 35
+    你的防御力太低了。
+    *goto count
+  *selectable_if (hp = 300) #皮太脆。
+    *set hp 150
+    你血皮太薄，不像守恶魔城的小 BOSS，反而像城外的史莱姆。
+    *goto count
 *label count
 *set count true
 *goto_scene ending

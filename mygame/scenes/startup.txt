@@ -77,6 +77,10 @@
 *create agility 50
 *create skill "暂缺"
 *create count false
+*create escape_enabled true
+*create second_enemy true
+*create monster1_alive true
+*create monster2_alive false
 *comment -------------混乱属性-------------
 *comment
 *comment
@@ -188,7 +192,6 @@
    *achieve futanari
    *page_break 继续创建角色
    *goto alignment
-
 *label alignment
 如果能选择，你希望你是什么阵营呢？（重要选项）
 *choice
@@ -197,12 +200,12 @@
    你的阵营是守序。
    *achieve lawful
    *goto_scene player
-  #中立
+  #中立（待施工）
    *set alignment "中立"
    你的阵营是中立。
    *achieve neutral
    *goto_scene npc
-  #混乱
+  #混乱（待施工）
    *set alignment "混乱"
    你的阵营是混乱。
    *achieve chaotic
